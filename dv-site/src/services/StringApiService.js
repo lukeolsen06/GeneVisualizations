@@ -27,7 +27,7 @@ class StringApiService {
     try {
       const response = await axios.get(`${this.baseURL}/tsv/get_string_ids`, {
         params: {
-          identifiers: identifiers.join(','),
+          identifiers: identifiers.join('\n'), // Use newlines, not commas
           species: this.defaultParams.species,
           limit: 1,
           echo_query: 1,

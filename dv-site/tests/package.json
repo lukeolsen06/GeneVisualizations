@@ -1,0 +1,24 @@
+{
+  "name": "string-api-tests",
+  "version": "1.0.0",
+  "description": "Test suite for StringApiService resolveIdentifiers method",
+  "type": "module",
+  "main": "api/runTests.js",
+  "scripts": {
+    "test": "node api/runTests.js",
+    "test:verbose": "node api/runTests.js --verbose",
+    "test:help": "node api/runTests.js --help"
+  },
+  "dependencies": {
+    "axios": "^1.6.0"
+  },
+  "devDependencies": {},
+  "keywords": [
+    "string-api",
+    "bioinformatics",
+    "testing",
+    "gene-identification"
+  ],
+  "author": "GeneVisualizations Team",
+  "license": "MIT"
+}
