@@ -1,6 +1,6 @@
 # StringApiService Test Suite
 
-This directory contains comprehensive tests for the StringApiService, specifically focusing on the `resolveIdentifiers` method.
+This directory contains comprehensive tests for the StringApiService, covering both the `resolveIdentifiers` and `getNetwork` methods.
 
 ## Test Structure
 
@@ -11,13 +11,20 @@ tests/
 │   ├── testData.js                 # Test data and configurations
 │   ├── runTests.js                 # Test runner script
 │   └── simpleTest.js               # Simple test script
+├── getNetwork/
+│   ├── getNetwork.test.js          # Main test file
+│   ├── testData.js                 # Test data and configurations
+│   ├── runTests.js                 # Test runner script
+│   └── simpleTest.js               # Simple test script
 ├── package.json                    # Test dependencies
 └── README.md                       # This file
 ```
 
 ## Test Coverage
 
-The test suite covers the following scenarios:
+The test suite covers the following scenarios for both `resolveIdentifiers` and `getNetwork` methods:
+
+### ResolveIdentifiers Tests
 
 ### 1. Basic Resolution Test
 
@@ -55,6 +62,45 @@ The test suite covers the following scenarios:
 - Measures response times
 - Validates success rates
 
+### GetNetwork Tests
+
+### 1. Basic Network Test
+
+- Tests network retrieval with gene names
+- Validates gene name resolution to STRING IDs
+- Checks network response structure and required fields
+- Uses common mouse genes (Eif5a, Actb, Gapdh)
+
+### 2. Confidence Thresholds Test
+
+- Tests different confidence thresholds (low, medium, high)
+- Validates that higher confidence returns fewer interactions
+- Ensures proper threshold filtering
+
+### 3. Network Types Test
+
+- Tests different network types (full, physical, functional)
+- Validates network type parameter handling
+- Ensures proper network filtering
+
+### 4. Cytoscape Conversion Test
+
+- Tests conversion to Cytoscape format
+- Validates node and edge structure
+- Ensures proper data mapping for visualization
+
+### 5. Performance Test
+
+- Tests with larger gene sets (5-10 genes)
+- Measures response times for network retrieval
+- Validates success rates and data quality
+
+### 6. Response Parsing Test
+
+- Tests TSV response parsing for network data
+- Validates data structure conversion
+- Ensures proper object mapping
+
 ## Running Tests
 
 ### Prerequisites
@@ -71,6 +117,32 @@ npm install
 ```bash
 cd tests
 npm test
+```
+
+### Run ResolveIdentifiers Tests
+
+```bash
+cd tests/resolveIdentifier
+node runTests.js
+```
+
+### Run GetNetwork Tests
+
+```bash
+cd tests/getNetwork
+node runTests.js
+```
+
+### Run Simple Tests
+
+```bash
+# ResolveIdentifiers simple test
+cd tests/resolveIdentifier
+node simpleTest.js
+
+# GetNetwork simple test
+cd tests/getNetwork
+node simpleTest.js
 ```
 
 ### Run with Verbose Output

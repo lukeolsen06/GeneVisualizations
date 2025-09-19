@@ -51,7 +51,7 @@ class StringApiService {
   async getNetwork(identifiers, options = {}) {
     try {
       const params = {
-        identifiers: identifiers.join(','),
+        identifiers: identifiers.join('\n'),
         species: this.defaultParams.species,
         required_score: options.confidenceThreshold || this.defaultParams.required_score,
         network_type: options.networkType || 'full',
@@ -78,7 +78,7 @@ class StringApiService {
   async getEnrichment(identifiers, options = {}) {
     try {
       const params = {
-        identifiers: identifiers.join(','),
+        identifiers: identifiers.join('\n'),
         species: this.defaultParams.species,
         caller_identity: 'eif5a-visualization-app'
       };
@@ -99,15 +99,15 @@ class StringApiService {
    * @param {Array} identifiers - Array of STRING identifiers
    * @returns {Promise<Object>} Protein information
    */
-  async getProteinInfo(identifiers) {
+  async getFunctionalAnnotation(identifiers) {
     try {
       const params = {
-        identifiers: identifiers.join(','),
+        identifiers: identifiers.join('\n'),
         species: this.defaultParams.species,
         caller_identity: 'eif5a-visualization-app'
       };
 
-      const response = await axios.get(`${this.baseURL}/tsv/protein_info`, {
+      const response = await axios.get(`${this.baseURL}/tsv/functional_annotation`, {
         params
       });
 
