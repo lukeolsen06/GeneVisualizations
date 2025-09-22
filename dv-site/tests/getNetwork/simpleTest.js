@@ -6,6 +6,7 @@
  */
 
 import StringApiService from '../../src/services/StringApiService.js';
+import { convertToCytoscapeFormat } from '../../src/services/StringDataUtils.js';
 
 // Simple test configuration
 const TEST_GENES = ['Eif5a', 'Actb', 'Gapdh'];
@@ -52,7 +53,7 @@ async function runSimpleTest() {
     
     // Step 4: Test Cytoscape conversion
     console.log('\n4. Converting to Cytoscape format...');
-    const cytoscapeData = StringApiService.convertToCytoscapeFormat(networkData);
+    const cytoscapeData = convertToCytoscapeFormat(networkData);
     
     console.log(`✅ Converted to ${cytoscapeData.nodes.length} nodes and ${cytoscapeData.edges.length} edges`);
     

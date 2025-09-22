@@ -4,6 +4,7 @@
  */
 
 import StringApiService from '../../src/services/StringApiService.js';
+import { convertToCytoscapeFormat } from '../../src/services/StringDataUtils.js';
 import { NETWORK_TEST_DATA } from './testData.js';
 
 // Test configuration using data from testData.js
@@ -254,7 +255,7 @@ class GetNetworkTest {
       
       const networkData = await this.stringApiService.getNetwork(stringIds);
       
-      const cytoscapeData = this.stringApiService.convertToCytoscapeFormat(networkData);
+      const cytoscapeData = convertToCytoscapeFormat(networkData);
       
       // Validate Cytoscape format using schema from testData.js
       const hasNodes = Array.isArray(cytoscapeData.nodes) && cytoscapeData.nodes.length > 0;
