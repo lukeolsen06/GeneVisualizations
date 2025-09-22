@@ -118,6 +118,12 @@ class StringApiService {
     }
   }
 
+  
+  
+  
+  
+  /** ============================================================= */
+  /** NON-API HELPER FUNCTIONS ============================================= */
   /**
    * Parse TSV response from STRING API
    * @param {string} tsvData - TSV formatted data
