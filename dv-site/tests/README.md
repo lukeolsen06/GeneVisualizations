@@ -1,6 +1,6 @@
 # StringApiService Test Suite
 
-This directory contains comprehensive tests for the StringApiService, covering both the `resolveIdentifiers` and `getNetwork` methods.
+This directory contains comprehensive tests for the StringApiService, covering the `resolveIdentifiers`, `getNetwork`, and `getEnrichment` methods.
 
 ## Test Structure
 
@@ -16,13 +16,18 @@ tests/
 │   ├── testData.js                 # Test data and configurations
 │   ├── runTests.js                 # Test runner script
 │   └── simpleTest.js               # Simple test script
+├── getEnrichment/
+│   ├── getEnrichment.test.js       # Main test file
+│   ├── testData.js                 # Test data and configurations
+│   ├── runTests.js                 # Test runner script
+│   └── simpleTest.js               # Simple test script
 ├── package.json                    # Test dependencies
 └── README.md                       # This file
 ```
 
 ## Test Coverage
 
-The test suite covers the following scenarios for both `resolveIdentifiers` and `getNetwork` methods:
+The test suite covers the following scenarios for the `resolveIdentifiers`, `getNetwork`, and `getEnrichment` methods:
 
 ### ResolveIdentifiers Tests
 
@@ -89,7 +94,7 @@ The test suite covers the following scenarios for both `resolveIdentifiers` and 
 - Validates node and edge structure
 - Ensures proper data mapping for visualization
 
-### 5. Performance Test
+### 5. Network Performance Test
 
 - Tests with larger gene sets (5-10 genes)
 - Measures response times for network retrieval
@@ -100,6 +105,57 @@ The test suite covers the following scenarios for both `resolveIdentifiers` and 
 - Tests TSV response parsing for network data
 - Validates data structure conversion
 - Ensures proper object mapping
+
+### GetEnrichment Tests
+
+### 1. Basic Enrichment Test
+
+- Tests enrichment analysis with gene names directly
+- Validates response structure and required fields
+- Uses common mouse genes (Eif5a, Actb, Gapdh)
+- Tests without prior STRING ID conversion
+
+### 2. Enrichment Options Test
+
+- Tests different filtering options (limit, p-value, FDR thresholds)
+- Validates option parameter handling
+- Ensures proper result filtering
+
+### 3. Cancer Pathways Test
+
+- Tests enrichment with cancer-related genes
+- Validates identification of cancer-related pathways
+- Uses oncogenes and tumor suppressors (Tp53, Mdm2, Myc, Pten, Akt1, Rb1)
+
+### 4. Translation Pathways Test
+
+- Tests enrichment with translation-related genes
+- Validates identification of translation pathways
+- Uses translation factors and ribosomal proteins
+
+### 5. Pathway Categories Test
+
+- Tests diversity of pathway categories returned
+- Validates multiple pathway databases (GO, KEGG, Reactome, WikiPathways)
+- Ensures comprehensive pathway coverage
+
+### 6. Enrichment Performance Test
+
+- Tests with larger gene sets (10 genes)
+- Measures response times for enrichment analysis
+- Validates success rates and data quality
+
+### 7. Response Parsing Test
+
+- Tests TSV response parsing for enrichment data
+- Validates data structure conversion
+- Ensures proper object mapping
+
+### 8. Statistical Validation Test
+
+- Tests validity of FDR and p-value statistics
+- Validates statistical value ranges (0-1)
+- Ensures proper gene count calculations
 
 ## Running Tests
 
@@ -133,6 +189,13 @@ cd tests/getNetwork
 node runTests.js
 ```
 
+### Run GetEnrichment Tests
+
+```bash
+cd tests/getEnrichment
+node runTests.js
+```
+
 ### Run Simple Tests
 
 ```bash
@@ -142,6 +205,10 @@ node simpleTest.js
 
 # GetNetwork simple test
 cd tests/getNetwork
+node simpleTest.js
+
+# GetEnrichment simple test
+cd tests/getEnrichment
 node simpleTest.js
 ```
 
@@ -179,9 +246,10 @@ The test suite uses carefully selected mouse gene symbols and Ensembl IDs:
 ### Test Configurations
 
 - **Small**: 3 genes (basic functionality)
-- **Medium**: 8 genes (moderate load)
-- **Large**: 15 genes (performance testing)
-- **Performance**: 30 genes (stress testing)
+- **Medium**: 5 genes (moderate load)
+- **Large**: 10 genes (performance testing)
+- **Cancer-related**: 6 genes (cancer pathway testing)
+- **Translation-related**: 5 genes (translation pathway testing)
 
 ## Expected Results
 
@@ -189,15 +257,19 @@ The test suite uses carefully selected mouse gene symbols and Ensembl IDs:
 
 - All valid gene symbols should resolve to STRING IDs
 - Invalid gene symbols should be handled gracefully
-- Response times should be under 10 seconds
+- Response times should be under 10 seconds for resolution/network tests
+- Response times should be under 20 seconds for enrichment tests
 - Success rate should be above 50% for valid genes
 - Response structure should match expected schema
+- Enrichment tests should return diverse pathway categories
+- Statistical values (FDR, p-value) should be valid (0-1 range)
 
 ### Performance Thresholds
 
-- Maximum response time: 10 seconds
+- Maximum response time: 10 seconds (resolution/network), 20 seconds (enrichment)
 - Minimum success rate: 50%
 - Maximum memory usage: 100MB (if available)
+- Minimum enrichment results: 1 pathway per test
 
 ## Troubleshooting
 
@@ -220,6 +292,13 @@ The test suite uses carefully selected mouse gene symbols and Ensembl IDs:
    - Check TSV response format
    - Verify response structure
    - Review API documentation
+
+4. **Enrichment Issues**
+
+   - Some gene sets may not have significant pathway enrichments
+   - Large gene sets may take longer than expected
+   - Check for valid FDR and p-value statistics
+   - Verify pathway category diversity
 
 ### Debug Mode
 
