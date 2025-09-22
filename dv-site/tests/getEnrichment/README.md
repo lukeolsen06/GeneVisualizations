@@ -9,6 +9,7 @@ The `getEnrichment()` method analyzes a set of proteins to identify enriched bio
 ## Test Files
 
 ### 1. `getEnrichment.test.js`
+
 The main test suite containing 8 comprehensive test cases:
 
 - **Basic Enrichment**: Tests basic functionality with small gene sets
@@ -21,7 +22,9 @@ The main test suite containing 8 comprehensive test cases:
 - **Statistical Validation**: Tests validity of FDR and p-value statistics
 
 ### 2. `testData.js`
+
 Contains test data including:
+
 - Various gene sets (small, medium, large, cancer-related, translation-related)
 - Enrichment options configurations
 - Validation schemas
@@ -29,25 +32,30 @@ Contains test data including:
 - Expected pathway categories
 
 ### 3. `runTests.js`
+
 Test runner with detailed reporting and summary statistics.
 
 ### 4. `simpleTest.js`
+
 Quick tests for basic functionality verification.
 
 ## Usage
 
 ### Running All Tests
+
 ```bash
 cd /Users/lukeolsen/Desktop/GeneVisualizations/dv-site/tests/getEnrichment
 node runTests.js
 ```
 
 ### Running Simple Tests
+
 ```bash
 node simpleTest.js
 ```
 
 ### Running Main Test Suite
+
 ```bash
 node getEnrichment.test.js
 ```
@@ -55,6 +63,7 @@ node getEnrichment.test.js
 ## Test Configuration
 
 The tests use the following default configuration:
+
 - **Species**: Mus musculus (mouse) - ID: 10090
 - **Format**: JSON response from STRING API
 - **Gene Sets**: Various combinations of well-known mouse genes
@@ -63,6 +72,7 @@ The tests use the following default configuration:
 ## Expected Results
 
 The tests validate:
+
 1. **Response Structure**: Correct TSV parsing and object structure
 2. **Statistical Validity**: FDR and p-value ranges (0-1)
 3. **Gene Counts**: Number of genes in enriched pathways
@@ -73,13 +83,17 @@ The tests validate:
 ## Key Features Tested
 
 ### Direct Gene Name Input
+
 The tests verify that gene names can be used directly without prior STRING ID resolution:
+
 ```javascript
 const result = await StringApiService.getEnrichment(['Eif5a', 'Actb', 'Gapdh']);
 ```
 
 ### Enrichment Options
+
 Tests various filtering options:
+
 ```javascript
 // With p-value threshold
 const result = await StringApiService.getEnrichment(genes, { pvalue_threshold: 0.05 });
@@ -92,7 +106,9 @@ const result = await StringApiService.getEnrichment(genes, { limit: 10 });
 ```
 
 ### Pathway Categories
+
 Tests return diverse pathway categories including:
+
 - GO Biological Process
 - GO Molecular Function
 - GO Cellular Component
@@ -109,7 +125,9 @@ Tests return diverse pathway categories including:
 3. **Invalid gene names**: Some gene names may not be recognized by STRING database
 
 ### Debug Mode
+
 Add console logging to see detailed API responses:
+
 ```javascript
 const result = await StringApiService.getEnrichment(genes);
 console.log('Full response:', JSON.stringify(result, null, 2));
@@ -118,6 +136,7 @@ console.log('Full response:', JSON.stringify(result, null, 2));
 ## Integration with Other Tests
 
 This test suite follows the same pattern as:
+
 - `getNetwork` tests (for network analysis)
 - `resolveIdentifier` tests (for identifier resolution)
 
