@@ -1,6 +1,6 @@
 # StringApiService Test Suite
 
-This directory contains comprehensive tests for the StringApiService, covering the `resolveIdentifiers`, `getNetwork`, and `getEnrichment` methods.
+This directory contains comprehensive tests for the StringApiService, covering the `resolveIdentifiers`, `getNetwork`, `getEnrichment`, and `getFunctionalAnnotation` methods.
 
 ## Test Structure
 
@@ -21,13 +21,19 @@ tests/
 │   ├── testData.js                 # Test data and configurations
 │   ├── runTests.js                 # Test runner script
 │   └── simpleTest.js               # Simple test script
+├── getFunctionalAnnotation/
+│   ├── getFunctionalAnnotation.test.js  # Main test file
+│   ├── testData.js                      # Test data and configurations
+│   ├── runTests.js                      # Test runner script
+│   ├── simpleTest.js                    # Simple test script
+│   └── README.md                        # Test documentation
 ├── package.json                    # Test dependencies
 └── README.md                       # This file
 ```
 
 ## Test Coverage
 
-The test suite covers the following scenarios for the `resolveIdentifiers`, `getNetwork`, and `getEnrichment` methods:
+The test suite covers the following scenarios for the `resolveIdentifiers`, `getNetwork`, `getEnrichment`, and `getFunctionalAnnotation` methods:
 
 ### ResolveIdentifiers Tests
 
@@ -157,6 +163,57 @@ The test suite covers the following scenarios for the `resolveIdentifiers`, `get
 - Validates statistical value ranges (0-1)
 - Ensures proper gene count calculations
 
+### GetFunctionalAnnotation Tests
+
+### 1. Basic Functional Annotation Test
+
+- Tests functional annotation retrieval with gene names directly
+- Validates response structure and required fields
+- Uses common mouse genes (Eif5a, Actb, Gapdh)
+- Tests without prior STRING ID conversion
+
+### 2. Functional Annotation Options Test
+
+- Tests different filtering options (limit, species, format)
+- Validates option parameter handling
+- Ensures proper result filtering
+
+### 3. Translation Annotations Test
+
+- Tests annotations with translation-related genes
+- Validates identification of translation-related annotations
+- Uses translation factors and ribosomal proteins (Eif5a, Eif2s1, Rps6)
+
+### 4. Cancer Annotations Test
+
+- Tests annotations with cancer-related genes
+- Validates identification of cancer-related annotations
+- Uses oncogenes and tumor suppressors (Tp53, Mdm2, Myc, Pten, Akt1, Rb1)
+
+### 5. Annotation Types Test
+
+- Tests diversity of annotation categories returned
+- Validates multiple annotation types (COMPARTMENTS, Process, Function, etc.)
+- Ensures comprehensive annotation coverage
+
+### 6. Functional Annotation Performance Test
+
+- Tests with larger gene sets (10 genes)
+- Measures response times for annotation retrieval
+- Validates success rates and data quality
+
+### 7. Annotation Response Parsing Test
+
+- Tests TSV response parsing for annotation data
+- Validates data structure conversion
+- Ensures proper object mapping
+
+### 8. Annotation Quality Test
+
+- Tests validity and completeness of annotation data
+- Validates annotation structure and content
+- Ensures proper field mapping and data integrity
+
 ## Running Tests
 
 ### Prerequisites
@@ -196,6 +253,13 @@ cd tests/getEnrichment
 node runTests.js
 ```
 
+### Run GetFunctionalAnnotation Tests
+
+```bash
+cd tests/getFunctionalAnnotation
+node runTests.js
+```
+
 ### Run Simple Tests
 
 ```bash
@@ -209,6 +273,10 @@ node simpleTest.js
 
 # GetEnrichment simple test
 cd tests/getEnrichment
+node simpleTest.js
+
+# GetFunctionalAnnotation simple test
+cd tests/getFunctionalAnnotation
 node simpleTest.js
 ```
 
@@ -248,8 +316,9 @@ The test suite uses carefully selected mouse gene symbols and Ensembl IDs:
 - **Small**: 3 genes (basic functionality)
 - **Medium**: 5 genes (moderate load)
 - **Large**: 10 genes (performance testing)
-- **Cancer-related**: 6 genes (cancer pathway testing)
-- **Translation-related**: 5 genes (translation pathway testing)
+- **Cancer-related**: 6 genes (cancer pathway/annotation testing)
+- **Translation-related**: 5 genes (translation pathway/annotation testing)
+- **Metabolic-related**: 5 genes (metabolic annotation testing)
 
 ## Expected Results
 
@@ -257,19 +326,21 @@ The test suite uses carefully selected mouse gene symbols and Ensembl IDs:
 
 - All valid gene symbols should resolve to STRING IDs
 - Invalid gene symbols should be handled gracefully
-- Response times should be under 10 seconds for resolution/network tests
+- Response times should be under 10 seconds for resolution/network/annotation tests
 - Response times should be under 20 seconds for enrichment tests
 - Success rate should be above 50% for valid genes
 - Response structure should match expected schema
 - Enrichment tests should return diverse pathway categories
+- Functional annotation tests should return diverse annotation categories
 - Statistical values (FDR, p-value) should be valid (0-1 range)
 
 ### Performance Thresholds
 
-- Maximum response time: 10 seconds (resolution/network), 20 seconds (enrichment)
+- Maximum response time: 10 seconds (resolution/network/annotation), 20 seconds (enrichment)
 - Minimum success rate: 50%
 - Maximum memory usage: 100MB (if available)
 - Minimum enrichment results: 1 pathway per test
+- Minimum annotation results: 1 annotation per test
 
 ## Troubleshooting
 
@@ -299,6 +370,13 @@ The test suite uses carefully selected mouse gene symbols and Ensembl IDs:
    - Large gene sets may take longer than expected
    - Check for valid FDR and p-value statistics
    - Verify pathway category diversity
+
+5. **Functional Annotation Issues**
+
+   - Some gene names may not have functional annotations available
+   - Large gene sets may return many annotations (1000+)
+   - Check for valid annotation structure and required fields
+   - Verify annotation category diversity
 
 ### Debug Mode
 
