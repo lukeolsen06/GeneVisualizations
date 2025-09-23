@@ -32,30 +32,32 @@ class GeneEnrichmentService {
 
       // Step 2: Get functional annotations for resolved genes
       console.log('Getting functional annotations...');
-      const stringIds = resolvedIds.map(item => item.stringId).filter(Boolean);
       let functionalAnnotations = [];
       
-      if (stringIds.length > 0) {
-        functionalAnnotations = await StringApiService.getFunctionalAnnotation(stringIds);
+      if (geneNames.length > 0) {
+        functionalAnnotations = await StringApiService.getFunctionalAnnotation(geneNames);
       }
 
       // Create a lookup map for functional annotations
+      // Note: functional annotations use gene symbols in inputGenes/preferredNames, not STRING IDs
       const functionalLookup = new Map();
       functionalAnnotations.forEach(annotation => {
-        const stringId = annotation.stringId;
-        if (!functionalLookup.has(stringId)) {
-          functionalLookup.set(stringId, []);
+        const geneSymbol = annotation.inputGenes || annotation.preferredNames;
+        if (geneSymbol) {
+          if (!functionalLookup.has(geneSymbol.toLowerCase())) {
+            functionalLookup.set(geneSymbol.toLowerCase(), []);
+          }
+          functionalLookup.get(geneSymbol.toLowerCase()).push({
+            term: annotation.term,
+            description: annotation.description
+          });
         }
-        functionalLookup.get(stringId).push({
-          term: annotation.term,
-          description: annotation.description
-        });
       });
 
       // Step 3: Enrich gene objects with STRING data
       const enrichedGenes = geneObjects.map(gene => {
         const resolved = resolvedLookup.get(gene.geneName);
-        const functionalTerms = resolved ? functionalLookup.get(resolved.stringId) || [] : [];
+        const functionalTerms = functionalLookup.get(gene.geneName) || [];
 
         return {
           ...gene, // Keep all original gene data (log2fc, padj, expression, etc.)
