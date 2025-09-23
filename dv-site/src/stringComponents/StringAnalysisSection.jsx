@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import GeneSetSelector from './GeneSetSelector';
 import StringNetworkRenderer from './StringNetworkRenderer';
 import NetworkInfoPanel from './NetworkInfoPanel';
+import GeneEnrichmentService from '../services/GeneEnrichmentService';
 import './StringAnalysisSection.css';
 
 /**
@@ -16,6 +17,7 @@ const StringAnalysisSection = () => {
   // State for the analysis workflow
   const [selectedComparison, setSelectedComparison] = useState('-- choose --');
   const [filteredGenes, setFilteredGenes] = useState([]);
+  const [enrichedGenes, setEnrichedGenes] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   
@@ -37,18 +39,54 @@ const StringAnalysisSection = () => {
   const handleComparisonChange = (comparison) => {
     setSelectedComparison(comparison);
     setFilteredGenes([]);
+    setEnrichedGenes([]);
     setNetworkData(null);
     setSelectedNode(null);
     setSelectedEdge(null);
     setError(null);
   };
 
+  // Enrich genes with STRING API data using the service
+  const enrichGenesWithStringData = async (geneObjects) => {
+    if (geneObjects.length === 0) return [];
+
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const enrichedGenes = await GeneEnrichmentService.enrichGenesWithStringData(geneObjects);
+      
+      // Get enrichment statistics
+      const enrichmentStats = GeneEnrichmentService.getEnrichmentStats(geneObjects, enrichedGenes);
+      
+      // Update analysis stats
+      setAnalysisStats(prev => ({
+        ...prev,
+        stringResolvedGenes: enrichmentStats.resolvedGenes,
+        filteredGenes: geneObjects.length
+      }));
+
+      return enrichedGenes;
+
+    } catch (error) {
+      console.error('Error enriching genes with STRING data:', error);
+      setError(`Failed to enrich genes with STRING data: ${error.message}`);
+      return geneObjects; // Return original genes if enrichment fails
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   // Handle filtered genes from GeneSetSelector
-  const handleFilteredGenes = (geneObjects) => {
+  const handleFilteredGenes = async (geneObjects) => {
     setFilteredGenes(geneObjects);
     setNetworkData(null);
     setSelectedNode(null);
     setSelectedEdge(null);
+
+    // Enrich genes with STRING data
+    const enriched = await enrichGenesWithStringData(geneObjects);
+    setEnrichedGenes(enriched);
   };
 
   // Handle network data from StringNetworkRenderer
@@ -153,9 +191,9 @@ const StringAnalysisSection = () => {
       )}
 
       {/* Network Visualization */}
-      {filteredGenes.length > 0 && (
+      {enrichedGenes.length > 0 && (
         <StringNetworkRenderer
-          geneObjects={filteredGenes}
+          geneObjects={enrichedGenes}
           selectedComparison={selectedComparison}
           onNetworkData={handleNetworkData}
           onNodeClick={handleNodeClick}

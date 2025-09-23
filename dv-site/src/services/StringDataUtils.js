@@ -36,7 +36,7 @@ export function getConfidenceLevel(score) {
 /**
  * Convert network data to Cytoscape format
  * @param {Array} networkData - Network data from STRING API
- * @param {Array} proteinInfo - Protein information data
+ * @param {Array} proteinInfo - Protein info data - empty at start but nodes with protein info will be added to this array
  * @returns {Object} Cytoscape-compatible data
  */
 export function convertToCytoscapeFormat(networkData, proteinInfo = []) {
