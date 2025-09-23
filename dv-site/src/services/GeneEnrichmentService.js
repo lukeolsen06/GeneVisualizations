@@ -63,13 +63,7 @@ class GeneEnrichmentService {
           ...gene, // Keep all original gene data (log2fc, padj, expression, etc.)
           stringId: resolved?.stringId || null,
           annotation: resolved?.annotation || null,
-          functionalTerms: functionalTerms,
-          // Add protein info for convertToCytoscapeFormat
-          proteinInfo: {
-            stringId: resolved?.stringId || null,
-            description: resolved?.annotation || null,
-            functionalTerms: functionalTerms
-          }
+          functionalTerms: functionalTerms
         };
       });
 

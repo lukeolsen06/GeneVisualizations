@@ -127,9 +127,6 @@ const GeneSetSelector = ({
       }
     })).filter(gene => gene.geneName); // Remove any undefined gene names
 
-    // Extract just gene names for STRING API
-    const geneNames = geneObjects.map(gene => gene.geneName);
-
     const stats = {
       totalGenes: data.length,
       filteredGenes: filtered.length,

@@ -36,37 +36,40 @@ export function getConfidenceLevel(score) {
 /**
  * Convert network data to Cytoscape format
  * @param {Array} networkData - Network data from STRING API
- * @param {Array} proteinInfo - Protein info data - empty at start but nodes with protein info will be added to this array
+ * @param {Array} enrichedGenes - Enriched gene objects with all data
  * @returns {Object} Cytoscape-compatible data
  */
-export function convertToCytoscapeFormat(networkData, proteinInfo = []) {
+export function convertToCytoscapeFormat(networkData, enrichedGenes = []) {
   const nodes = new Map();
   const edges = [];
 
-  // Create protein info lookup
-  const proteinLookup = new Map();
-  proteinInfo.forEach(protein => {
-    proteinLookup.set(protein.stringId, protein);
+  // Create enriched genes lookup by STRING ID
+  const geneLookup = new Map();
+  enrichedGenes.forEach(gene => {
+    if (gene.stringId) {
+      geneLookup.set(gene.stringId, gene);
+    }
   });
 
   // Process network data to extract nodes and edges
   networkData.forEach(interaction => {
-    const sourceId = interaction['preferredName_A'] || interaction['stringId_A'];
+    const sourceId = interaction['preferredName_A'] || interaction['stringId_A']; // if there is a preferred name, use it, otherwise use the string id
     const targetId = interaction['preferredName_B'] || interaction['stringId_B'];
     const score = parseFloat(interaction['score']) || 0;
 
     // Add source node
     if (!nodes.has(sourceId)) {
-      const protein = proteinLookup.get(interaction['stringId_A']);
+      const enrichedGene = geneLookup.get(interaction['stringId_A']);
       nodes.set(sourceId, {
         data: {
           id: sourceId,
-          label: sourceId,
           stringId: interaction['stringId_A'],
-          ...(protein && {
-            description: protein.description,
-            chromosome: protein.chromosome,
-            annotation: protein.annotation
+          ...(enrichedGene && {
+            log2fc: enrichedGene.log2fc,
+            padj: enrichedGene.padj,
+            expression: enrichedGene.expression,
+            annotation: enrichedGene.annotation,
+            functionalTerms: enrichedGene.functionalTerms
           })
         }
       });
@@ -74,16 +77,17 @@ export function convertToCytoscapeFormat(networkData, proteinInfo = []) {
 
     // Add target node
     if (!nodes.has(targetId)) {
-      const protein = proteinLookup.get(interaction['stringId_B']);
+      const enrichedGene = geneLookup.get(interaction['stringId_B']);
       nodes.set(targetId, {
         data: {
           id: targetId,
-          label: targetId,
           stringId: interaction['stringId_B'],
-          ...(protein && {
-            description: protein.description,
-            chromosome: protein.chromosome,
-            annotation: protein.annotation
+          ...(enrichedGene && {
+            log2fc: enrichedGene.log2fc,
+            padj: enrichedGene.padj,
+            expression: enrichedGene.expression,
+            annotation: enrichedGene.annotation,
+            functionalTerms: enrichedGene.functionalTerms
           })
         }
       });
