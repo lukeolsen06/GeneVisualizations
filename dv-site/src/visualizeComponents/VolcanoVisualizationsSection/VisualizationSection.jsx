@@ -8,6 +8,7 @@ import ToggleCharts from "./ToggleCharts";
 import DotPlot from "../../barCharts/testNetwork/DotPlot";
 import Toggle from "../ToggleGraphComponent";
 import Scatter from "./ScatterPlot";
+import StringNetworkVisualization from "../../stringComponents/StringNetworkVisualization";
 
 import {
   chartDataMapping,
@@ -171,29 +172,23 @@ export default function DEGListDatasets() {
           <div className="all-genes-container">
             <div className="view-pathway">
               <h3 style={{ margin: 30 }}>
-                View our original STRING analysis
+                Interactive STRING Network Analysis
                 <br />
               </h3>
             </div>
           </div>
-          <div
-            style={{
-              height: "1250px",
-              width: "100%",
-              display: "flex",
-              justifyContent: "center",
-              alignItems: "center",
-              margin: "30px",
-            }}
-          >
-            <iframe
-              src="https://version-12-0.string-db.org/cgi/globalenrichment?networkId=bBmGA3kwle9n"
-              title="Embedded Page"
-              width="95%"
-              height="1250px"
-              frameBorder="0"
-              scrolling="auto"
-            ></iframe>
+          <div style={{ 
+            margin: "30px",
+            height: "800px",
+            width: "100%"
+          }}>
+            <StringNetworkVisualization 
+              geneList={getGeneListFromDataset()} //temporary
+              confidenceThreshold={400}
+              networkType="full"
+              onNodeClick={handleNodeClick}
+              onEdgeClick={handleEdgeClick}
+            />
           </div>
         </>
       )}
