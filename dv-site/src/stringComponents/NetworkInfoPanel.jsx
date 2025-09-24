@@ -19,9 +19,9 @@ const NetworkInfoPanel = ({ selectedNode, selectedEdge, onClose }) => {
       <div className="info-panel-content">
         <div className="info-panel-header">
           <h3>
-            {selectedNode ? 'Node Information' : 'Edge Information'}
+            {selectedNode ? 'Gene Information' : 'Edge Information'}
           </h3>
-          <button className="close-button" onClick={onClose}>
+          <button className="close-button" onClick={onClose} title="Close panel">
             ×
           </button>
         </div>

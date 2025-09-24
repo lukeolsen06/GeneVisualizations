@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import GeneSetSelector from './GeneSetSelector';
 import StringNetworkRenderer from './StringNetworkRenderer';
-import NetworkInfoPanel from './NetworkInfoPanel';
 import GeneEnrichmentService from '../services/GeneEnrichmentService';
 import './StringAnalysisSection.css';
 
@@ -195,20 +194,14 @@ const StringAnalysisSection = () => {
         <StringNetworkRenderer
           geneObjects={enrichedGenes}
           selectedComparison={selectedComparison}
+          selectedNode={selectedNode}
+          selectedEdge={selectedEdge}
           onNetworkData={handleNetworkData}
           onNodeClick={handleNodeClick}
           onEdgeClick={handleEdgeClick}
+          onClearSelection={clearSelections}
           onLoadingChange={handleLoadingChange}
           onError={handleError}
-        />
-      )}
-
-      {/* Information Panel */}
-      {(selectedNode || selectedEdge) && (
-        <NetworkInfoPanel
-          selectedNode={selectedNode}
-          selectedEdge={selectedEdge}
-          onClose={clearSelections}
         />
       )}
       

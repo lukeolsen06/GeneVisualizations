@@ -3,10 +3,22 @@
 .string-network-renderer {
   position: relative;
   width: 100%;
-  height: 600px; /* Default height, can be adjusted */
+  height: 800px; /* Increased height for side-by-side layout */
+  display: flex;
+  gap: 20px;
   border: 1px solid #ddd;
   border-radius: 8px;
   background-color: #f9f9f9;
+  overflow: hidden;
+}
+
+.network-container {
+  position: relative;
+  flex: 1;
+  min-width: 0; /* Allows flex item to shrink below content size */
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  background-color: #ffffff;
   overflow: hidden;
 }
 
@@ -124,6 +136,12 @@
 /* Responsive Design */
 @media (max-width: 768px) {
   .string-network-renderer {
+    height: auto;
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  .network-container {
     height: 400px;
   }
   

@@ -22,8 +22,8 @@ function App() {
           <Route path="/visualize" element={<Visualize />} />
         </Routes>
       </div>
-      <ContactSection />
-      <HomeFooter />
+      {location.pathname !== '/visualize' && <ContactSection />}
+      {location.pathname !== '/visualize' && <HomeFooter />}
     </>
   );
 }

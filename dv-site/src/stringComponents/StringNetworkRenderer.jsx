@@ -3,6 +3,7 @@ import cytoscape from 'cytoscape';
 import fcose from 'cytoscape-fcose';
 import StringApiService from '../services/StringApiService';
 import { convertToCytoscapeFormat } from '../services/StringDataUtils';
+import NetworkInfoPanel from './NetworkInfoPanel';
 import './StringNetworkRenderer.css';
 
 // Register the fcose layout
@@ -22,9 +23,12 @@ cytoscape.use(fcose);
 const StringNetworkRenderer = ({
   geneObjects,           // Enriched gene objects from parent
   selectedComparison,    // Current comparison name
+  selectedNode,          // Currently selected node data
+  selectedEdge,          // Currently selected edge data
   onNetworkData,        // Callback: (network, stats) => void
   onNodeClick,          // Callback: (nodeData) => void
   onEdgeClick,          // Callback: (edgeData) => void
+  onClearSelection,     // Callback: () => void - clear selected node/edge
   onLoadingChange,      // Callback: (loading) => void
   onError              // Callback: (errorMessage) => void
 }) => {
@@ -291,43 +295,56 @@ const StringNetworkRenderer = ({
       onEdgeClick(edgeData);
     });
 
-    // Background click handler (deselect all)
+    // Background click handler (deselect all and clear info panel)
     cyRef.current.on('tap', (event) => {
       if (event.target === cyRef.current) {
         cyRef.current.nodes().unselect();
         cyRef.current.edges().unselect();
+        // Clear the NetworkInfoPanel
+        onClearSelection();
       }
     });
   };
 
   return (
     <div className="string-network-renderer">
-      {/* Network Container */}
-      <div ref={containerRef} className="cytoscape-container" />
+      <div className="network-container">
+        {/* Network Container */}
+        <div ref={containerRef} className="cytoscape-container" />
+        
+        {/* Loading State */}
+        {isLoading && (
+          <div className="loading-overlay">
+            <div className="loading-spinner"></div>
+            <p>Loading network...</p>
+          </div>
+        )}
+        
+        {/* Error State */}
+        {error && (
+          <div className="error-message">
+            <h4>Network Error</h4>
+            <p>{error}</p>
+            <button onClick={() => setError(null)}>Dismiss</button>
+          </div>
+        )}
+        
+        {/* Network Stats */}
+        {networkStats.nodes > 0 && (
+          <div className="network-stats">
+            <span className="stat-item">Nodes: {networkStats.nodes}</span>
+            <span className="stat-item">Edges: {networkStats.edges}</span>
+          </div>
+        )}
+      </div>
       
-      {/* Loading State */}
-      {isLoading && (
-        <div className="loading-overlay">
-          <div className="loading-spinner"></div>
-          <p>Loading network...</p>
-        </div>
-      )}
-      
-      {/* Error State */}
-      {error && (
-        <div className="error-message">
-          <h4>Network Error</h4>
-          <p>{error}</p>
-          <button onClick={() => setError(null)}>Dismiss</button>
-        </div>
-      )}
-      
-      {/* Network Stats */}
-      {networkStats.nodes > 0 && (
-        <div className="network-stats">
-          <span className="stat-item">Nodes: {networkStats.nodes}</span>
-          <span className="stat-item">Edges: {networkStats.edges}</span>
-        </div>
+      {/* Information Panel */}
+      {(selectedNode || selectedEdge) && (
+        <NetworkInfoPanel
+          selectedNode={selectedNode}
+          selectedEdge={selectedEdge}
+          onClose={onClearSelection}
+        />
       )}
     </div>
   );

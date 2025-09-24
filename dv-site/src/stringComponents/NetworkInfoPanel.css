@@ -1,17 +1,15 @@
 /* NetworkInfoPanel Component Styles */
 
 .network-info-panel {
-  position: fixed;
-  top: 20px;
-  right: 20px;
+  position: relative;
   width: 400px;
-  max-height: 80vh;
+  height: 100%;
   background-color: white;
   border: 1px solid #ddd;
   border-radius: 8px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  z-index: 1000;
   overflow: hidden;
+  flex-shrink: 0;
 }
 
 .info-panel-content {
@@ -27,6 +25,7 @@
   padding: 16px 20px;
   background-color: #f5f5f5;
   border-bottom: 1px solid #ddd;
+  min-height: 50px;
 }
 
 .info-panel-header h3 {
@@ -38,23 +37,31 @@
 
 .close-button {
   background: none;
-  border: none;
-  font-size: 24px;
+  border: 1px solid transparent;
+  font-size: 20px;
+  font-weight: bold;
   color: #666;
   cursor: pointer;
   padding: 0;
-  width: 30px;
-  height: 30px;
+  width: 32px;
+  height: 32px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 4px;
-  transition: background-color 0.2s;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
 }
 
 .close-button:hover {
-  background-color: #e0e0e0;
-  color: #333;
+  background-color: #ff4444;
+  color: white;
+  border-color: #cc3333;
+  transform: scale(1.05);
+}
+
+.close-button:active {
+  transform: scale(0.95);
 }
 
 .info-panel-body {
@@ -193,12 +200,8 @@
 /* Responsive Design */
 @media (max-width: 768px) {
   .network-info-panel {
-    position: fixed;
-    top: 10px;
-    left: 10px;
-    right: 10px;
-    width: auto;
-    max-height: 70vh;
+    width: 100%;
+    max-height: 400px;
   }
   
   .info-panel-header {
@@ -233,11 +236,13 @@
   
   .close-button {
     color: #ccc;
+    border-color: transparent;
   }
   
   .close-button:hover {
-    background-color: #444;
-    color: #fff;
+    background-color: #ff4444;
+    color: white;
+    border-color: #cc3333;
   }
   
   .node-info h4,
