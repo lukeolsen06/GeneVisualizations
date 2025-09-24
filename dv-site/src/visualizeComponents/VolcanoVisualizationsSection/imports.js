@@ -135,6 +135,7 @@ const chartDataMapping = {
 
 const dropdownOptions = [
   { label: "-- choose --" },
+  { label: "MOCK_TEST" },
   { label: "DHS_DOHHvsWT_EC" },
   { label: "DHS_DOHHvsTar4_EC" },
   { label: "eIF5A_DDvsDHS_DOHH" },

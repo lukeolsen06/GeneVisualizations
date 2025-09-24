@@ -60,7 +60,7 @@ export function convertToCytoscapeFormat(networkData, enrichedGenes = []) {
     // Add source node
     if (!nodes.has(sourceId)) {
       const enrichedGene = geneLookup.get(interaction['stringId_A']);
-      nodes.set(sourceId, {
+      const nodeData = {
         data: {
           id: sourceId,
           stringId: interaction['stringId_A'],
@@ -72,7 +72,10 @@ export function convertToCytoscapeFormat(networkData, enrichedGenes = []) {
             functionalTerms: enrichedGene.functionalTerms
           })
         }
-      });
+      };
+      
+      
+      nodes.set(sourceId, nodeData);
     }
 
     // Add target node

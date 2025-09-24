@@ -211,6 +211,7 @@ const StringAnalysisSection = () => {
           onClose={clearSelections}
         />
       )}
+      
     </div>
   );
 };
