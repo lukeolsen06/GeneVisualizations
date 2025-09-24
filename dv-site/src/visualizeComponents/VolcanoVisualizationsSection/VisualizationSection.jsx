@@ -8,7 +8,7 @@ import ToggleCharts from "./ToggleCharts";
 import DotPlot from "../../barCharts/testNetwork/DotPlot";
 import Toggle from "../ToggleGraphComponent";
 import Scatter from "./ScatterPlot";
-import StringNetworkVisualization from "../../stringComponents/StringNetworkVisualization";
+import StringAnalysisSection from "../../stringComponents/StringAnalysisSection";
 
 import {
   chartDataMapping,
@@ -182,13 +182,7 @@ export default function DEGListDatasets() {
             height: "800px",
             width: "100%"
           }}>
-            <StringNetworkVisualization 
-              geneList={getGeneListFromDataset()} //temporary
-              confidenceThreshold={400}
-              networkType="full"
-              onNodeClick={handleNodeClick}
-              onEdgeClick={handleEdgeClick}
-            />
+            <StringAnalysisSection />
           </div>
         </>
       )}
