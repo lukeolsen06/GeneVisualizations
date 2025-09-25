@@ -52,18 +52,25 @@ const NetworkInfoPanel = ({ selectedNode, selectedEdge, centralityData, onClose 
               )}
 
               {centralityData && centralityData.has(selectedNode.id) && (
-                <p><strong>Degree Centrality:</strong> 
-                  <span className="centrality-value centrality-tooltip">
-                    {centralityData.get(selectedNode.id).toFixed(4)}
-                    <span className="tooltip-text">
-                      <strong>Degree Centrality Calculation:</strong><br/>
-                      • Degree (connections): 30% weight<br/>
-                      • Confidence scores: 70% weight<br/>
-                      • Formula: 0.3 × (degree/max_possible) + 0.7 × (avg_confidence)<br/>
-                      • Higher values = more central/important nodes
+                <>
+                  <p><strong>Degree:</strong> 
+                    <span className="centrality-value">
+                      {centralityData.get(selectedNode.id + '_degree') || 0}
                     </span>
-                  </span>
-                </p>
+                  </p>
+                  <p><strong>Degree Centrality:</strong> 
+                    <span className="centrality-value centrality-tooltip">
+                      {centralityData.get(selectedNode.id).toFixed(4)}
+                      <span className="tooltip-text">
+                        <strong>Degree Centrality Calculation:</strong><br/>
+                        • Degree (connections): 30% weight<br/>
+                        • Confidence scores: 70% weight<br/>
+                        • Formula: 0.3 × (degree/max_possible) + 0.7 × (avg_confidence)<br/>
+                        • Higher values = more central/important nodes
+                      </span>
+                    </span>
+                  </p>
+                </>
               )}
               
               

@@ -201,6 +201,7 @@ const StringNetworkRenderer = ({
         const centralityLookup = new Map();
         centralityResults.forEach(result => {
           centralityLookup.set(result.id, result.normalizedDegreeCentrality);
+          centralityLookup.set(result.id + '_degree', result.degree);
         });
         
         setCentralityData(centralityLookup);
@@ -311,7 +312,12 @@ const StringNetworkRenderer = ({
         selector: 'node:selected',
         style: {
           'border-width': 4,
-          'border-color': '#00ff00'
+          'border-color': (node) => {
+            const expression = node.data('expression');
+            if (expression === 'upregulated') return '#00ff00'; // Green for upregulated
+            if (expression === 'downregulated') return '#ff0000'; // Red for downregulated
+            return '#888888'; // Gray for no expression data
+          }
         }
       }
     ];

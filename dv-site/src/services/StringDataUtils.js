@@ -186,7 +186,8 @@ export function calculateNormalizedDegreeCentrality(cytoscapeInstance) {
       return {
         id: nodeId,
         stringId: node.data('stringId'),
-        normalizedDegreeCentrality: alphaWeightedCentrality
+        normalizedDegreeCentrality: alphaWeightedCentrality,
+        degree: degree
       };
     });
 
