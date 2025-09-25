@@ -143,6 +143,62 @@
   border: 1px solid #ffcdd2;
 }
 
+.centrality-value {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 13px;
+  font-weight: 600;
+  margin-left: 8px;
+  background-color: #e8f5e8;
+  color: #2e7d32;
+  border: 1px solid #c8e6c9;
+  font-family: 'Courier New', monospace;
+}
+
+/* Tooltip styles */
+.centrality-tooltip {
+  position: relative;
+  cursor: help;
+}
+
+.centrality-tooltip .tooltip-text {
+  visibility: hidden;
+  width: 300px;
+  background-color: #333;
+  color: #fff;
+  text-align: left;
+  border-radius: 6px;
+  padding: 12px;
+  position: absolute;
+  z-index: 1000;
+  bottom: 125%;
+  left: 50%;
+  margin-left: -150px;
+  opacity: 0;
+  transition: opacity 0.3s;
+  font-size: 12px;
+  line-height: 1.4;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  border: 1px solid #555;
+}
+
+.centrality-tooltip .tooltip-text::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  margin-left: -5px;
+  border-width: 5px;
+  border-style: solid;
+  border-color: #333 transparent transparent transparent;
+}
+
+.centrality-tooltip:hover .tooltip-text {
+  visibility: visible;
+  opacity: 1;
+}
+
 .functional-terms {
   margin-top: 16px;
   background-color: #f9f9f9;
@@ -263,5 +319,21 @@
   
   .confidence-info p {
     color: #aaa;
+  }
+  
+  .centrality-value {
+    background-color: #2e4a2e;
+    color: #81c784;
+    border-color: #4caf50;
+  }
+  
+  .centrality-tooltip .tooltip-text {
+    background-color: #1a1a1a;
+    color: #fff;
+    border-color: #444;
+  }
+  
+  .centrality-tooltip .tooltip-text::after {
+    border-color: #1a1a1a transparent transparent transparent;
   }
 }

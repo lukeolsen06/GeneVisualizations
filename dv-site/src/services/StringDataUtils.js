@@ -114,9 +114,97 @@ export function convertToCytoscapeFormat(networkData, enrichedGenes = []) {
   };
 }
 
+/**
+ * Calculate normalized degree centrality for each node in the network
+ * @param {Object} cytoscapeInstance - The Cytoscape.js instance
+ * @returns {Array} Array of objects with node ID and normalized degree centrality score
+ */
+export function calculateNormalizedDegreeCentrality(cytoscapeInstance) {
+  if (!cytoscapeInstance || typeof cytoscapeInstance.nodes !== 'function') {
+    console.error('Invalid Cytoscape instance provided');
+    return [];
+  }
+
+  try {
+    // Get all nodes from the Cytoscape instance
+    const nodes = cytoscapeInstance.nodes();
+    const edges = cytoscapeInstance.edges();
+    
+    console.log('Total nodes:', nodes.length);
+    console.log('Total edges:', edges.length);
+    
+    // Check if nodes collection is valid
+    if (nodes.length === 0) {
+      console.error('No nodes found in the network');
+      return [];
+    }
+    
+    // Check if edges collection is valid
+    if (edges.length === 0) {
+      console.error('No edges found in the network');
+      return [];
+    }
+    
+    // Debug: Check edges and their weights
+    if (edges.length > 0) {
+      console.log('Sample edge data:', edges[0].data());
+      console.log('Sample edge score:', edges[0].data('score'));
+    }
+    
+    // Debug: Check nodes
+    if (nodes.length > 0) {
+      console.log('Sample node data:', nodes[0].data());
+      console.log('Sample node connected edges:', nodes[0].connectedEdges().length);
+    }
+    
+    // Manual degree centrality calculation since Cytoscape.js built-in functions are failing
+    console.log('Calculating degree centrality manually...');
+    
+    const results = nodes.map(node => {
+      const nodeId = node.id();
+      const connectedEdges = node.connectedEdges();
+      const degree = connectedEdges.length;
+      
+      // Calculate weighted degree centrality
+      let weightedDegree = 0;
+      connectedEdges.forEach(edge => {
+        const score = parseFloat(edge.data('score')) || 0;
+        weightedDegree += score;
+      });
+      
+      // Normalize by total possible edges (n-1 for undirected graph)
+      const totalNodes = nodes.length;
+      const maxPossibleEdges = totalNodes - 1;
+      const normalizedDegree = maxPossibleEdges > 0 ? degree / maxPossibleEdges : 0;
+      
+      // Calculate alpha-weighted centrality (alpha = 0.3 so confidence scores get 70% weight)
+      const alpha = 0.3;
+      const alphaWeightedCentrality = alpha * normalizedDegree + (1 - alpha) * (weightedDegree / connectedEdges.length || 0);
+      
+      console.log(`Node ${nodeId}: degree=${degree}, weightedDegree=${weightedDegree.toFixed(3)}, normalizedDegree=${normalizedDegree.toFixed(4)}, final=${alphaWeightedCentrality.toFixed(4)}`);
+      
+      return {
+        id: nodeId,
+        stringId: node.data('stringId'),
+        normalizedDegreeCentrality: alphaWeightedCentrality
+      };
+    });
+
+    console.log(results);
+
+    // Sort by centrality score in descending order
+    return results.sort((a, b) => b.normalizedDegreeCentrality - a.normalizedDegreeCentrality);
+    
+  } catch (error) {
+    console.error('Error calculating normalized degree centrality:', error);
+    return [];
+  }
+}
+
 // Export all utility functions as named exports and as default object
 export default {
   parseTsvResponse,
   getConfidenceLevel,
-  convertToCytoscapeFormat
+  convertToCytoscapeFormat,
+  calculateNormalizedDegreeCentrality
 };

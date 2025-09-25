@@ -2,7 +2,7 @@ import React, { useRef, useEffect, useState } from 'react';
 import cytoscape from 'cytoscape';
 import fcose from 'cytoscape-fcose';
 import StringApiService from '../services/StringApiService';
-import { convertToCytoscapeFormat } from '../services/StringDataUtils';
+import { convertToCytoscapeFormat, calculateNormalizedDegreeCentrality } from '../services/StringDataUtils';
 import NetworkInfoPanel from './NetworkInfoPanel';
 import './StringNetworkRenderer.css';
 
@@ -40,6 +40,7 @@ const StringNetworkRenderer = ({
     nodes: 0,
     edges: 0
   });
+  const [centralityData, setCentralityData] = useState(null);
 
   // Main effect: Fetch network data and render when geneObjects change
   useEffect(() => {
@@ -67,6 +68,7 @@ const StringNetworkRenderer = ({
       cyRef.current = null;
     }
     setNetworkStats({ nodes: 0, edges: 0 });
+    setCentralityData(null);
   };
 
   /**
@@ -178,11 +180,36 @@ const StringNetworkRenderer = ({
       const layout = cyRef.current.layout(getLayoutConfig());
       
       layout.on('layoutstop', () => {
+        // Calculate degree centrality after layout is complete
+        calculateAndStoreCentrality();
         resolve();
       });
       
       layout.run();
     });
+  };
+
+  /**
+   * Calculate and store degree centrality data
+   */
+  const calculateAndStoreCentrality = () => {
+    if (cyRef.current) {
+      try {
+        const centralityResults = calculateNormalizedDegreeCentrality(cyRef.current);
+        
+        // Create a lookup map for quick access by node ID
+        const centralityLookup = new Map();
+        centralityResults.forEach(result => {
+          centralityLookup.set(result.id, result.normalizedDegreeCentrality);
+        });
+        
+        setCentralityData(centralityLookup);
+        console.log('Degree centrality calculated for', centralityResults.length, 'nodes');
+      } catch (error) {
+        console.error('Error calculating degree centrality:', error);
+        setCentralityData(null);
+      }
+    }
   };
 
   /**
@@ -369,6 +396,7 @@ const StringNetworkRenderer = ({
         <NetworkInfoPanel
           selectedNode={selectedNode}
           selectedEdge={selectedEdge}
+          centralityData={centralityData}
           onClose={onClearSelection}
         />
       )}

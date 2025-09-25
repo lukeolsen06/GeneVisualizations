@@ -8,7 +8,7 @@ import './NetworkInfoPanel.css';
  * This is a placeholder implementation that will be enhanced later
  * with proper information display for gene/protein data
  */
-const NetworkInfoPanel = ({ selectedNode, selectedEdge, onClose }) => {
+const NetworkInfoPanel = ({ selectedNode, selectedEdge, centralityData, onClose }) => {
   if (!selectedNode && !selectedEdge) {
     return null;
   }
@@ -50,6 +50,22 @@ const NetworkInfoPanel = ({ selectedNode, selectedEdge, onClose }) => {
                   </span>
                 </p>
               )}
+
+              {centralityData && centralityData.has(selectedNode.id) && (
+                <p><strong>Degree Centrality:</strong> 
+                  <span className="centrality-value centrality-tooltip">
+                    {centralityData.get(selectedNode.id).toFixed(4)}
+                    <span className="tooltip-text">
+                      <strong>Degree Centrality Calculation:</strong><br/>
+                      • Degree (connections): 30% weight<br/>
+                      • Confidence scores: 70% weight<br/>
+                      • Formula: 0.3 × (degree/max_possible) + 0.7 × (avg_confidence)<br/>
+                      • Higher values = more central/important nodes
+                    </span>
+                  </span>
+                </p>
+              )}
+              
               
               {selectedNode.annotation && (
                 <p><strong>Annotation:</strong> {selectedNode.annotation}</p>
