@@ -223,25 +223,46 @@ const StringNetworkRenderer = ({
       {
         selector: 'node',
         style: {
+          'shape': 'ellipse',
           'background-color': (node) => {
             const expression = node.data('expression');
             if (expression === 'upregulated') return '#87CEFA'; // Red
             if (expression === 'downregulated') return '#FFE4E1'; // Blue
             return '#888888'; // Gray for no expression data
           },
-          'width': '60px',
-          'height': '60px',
+          'background-opacity': 0.9,
+          'background-gradient-direction': 'to-bottom-right',
+          'background-gradient-stop-colors': (node) => {
+            const expression = node.data('expression');
+            if (expression === 'upregulated') {
+              return '#E6F7FF #87CEFA #2E86AB'; // Very light to very dark blue
+            }
+            if (expression === 'downregulated') {
+              return '#FFF0F5 #FFE4E1 #D63384'; // Very light to very dark pink
+            }
+            return '#F5F5F5 #888888 #444444'; // Very light to very dark gray
+          },
+          'background-gradient-stop-positions': '0% 50% 100%',
+          'background-gradient-stop-opacity': 1.0,
+          'width': '30px',
+          'height': '30px',
           'label': 'data(id)',
           'text-valign': 'center',
           'text-halign': 'center',
-          'font-size': '12px',
+          'font-size': '5px',
           'font-weight': 'bold',
           'color': '#ffffff',
           'text-outline-width': 1,
           'text-outline-opacity': 0.5,
           'text-outline-color': '#000000',
           'border-width': 2,
-          'border-color': '#ffffff'
+          'border-color': '#FFFFFF',
+          'border-opacity': 0.9,
+          'shadow-opacity': 0.5,
+          'shadow-blur': 8,
+          'shadow-offset-x': 3,
+          'shadow-offset-y': 3,
+          'shadow-color': '#000000'
         }
       },
       {
