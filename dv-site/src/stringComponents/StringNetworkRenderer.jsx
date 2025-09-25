@@ -225,8 +225,8 @@ const StringNetworkRenderer = ({
         style: {
           'background-color': (node) => {
             const expression = node.data('expression');
-            if (expression === 'upregulated') return '#ff4444'; // Red
-            if (expression === 'downregulated') return '#4444ff'; // Blue
+            if (expression === 'upregulated') return '#87CEFA'; // Red
+            if (expression === 'downregulated') return '#FFE4E1'; // Blue
             return '#888888'; // Gray for no expression data
           },
           'width': '60px',
@@ -237,7 +237,8 @@ const StringNetworkRenderer = ({
           'font-size': '12px',
           'font-weight': 'bold',
           'color': '#ffffff',
-          'text-outline-width': 2,
+          'text-outline-width': 1,
+          'text-outline-opacity': 0.5,
           'text-outline-color': '#000000',
           'border-width': 2,
           'border-color': '#ffffff'
@@ -248,9 +249,13 @@ const StringNetworkRenderer = ({
         style: {
           'width': (edge) => Math.max(1, edge.data('score') / 100),
           'opacity': (edge) => Math.max(0.3, edge.data('score') / 1000),
-          'line-color': '#999999',
+          'line-color': (edge) => {
+            const score = edge.data('score');
+            if (score >= 0.7) return '#00ff0080';
+            if (score >= 0.4) return '#ffff0080';
+            return '#ff000080';
+          },
           'target-arrow-color': '#999999',
-          'target-arrow-shape': 'triangle',
           'curve-style': 'bezier'
         }
       },
@@ -258,7 +263,7 @@ const StringNetworkRenderer = ({
         selector: 'node:selected',
         style: {
           'border-width': 4,
-          'border-color': '#ffaa00'
+          'border-color': '#00ff00'
         }
       }
     ];

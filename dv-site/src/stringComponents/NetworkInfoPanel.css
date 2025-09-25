@@ -104,15 +104,15 @@
 }
 
 .expression-tag.upregulated {
-  background-color: #ffebee;
-  color: #d32f2f;
-  border: 1px solid #ffcdd2;
-}
-
-.expression-tag.downregulated {
   background-color: #e3f2fd;
   color: #1976d2;
   border: 1px solid #bbdefb;
+}
+
+.expression-tag.downregulated {
+  background-color: #ffebee;
+  color: #d32f2f;
+  border: 1px solid #ffcdd2;
 }
 
 .confidence-tag {
