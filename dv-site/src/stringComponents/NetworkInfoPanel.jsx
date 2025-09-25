@@ -90,7 +90,7 @@ const NetworkInfoPanel = ({ selectedNode, selectedEdge, onClose }) => {
               <div className="confidence-info">
                 <p><small>
                   <strong>Confidence Levels:</strong><br/>
-                  High: ≥700 | Medium: 400-699 | Low: &lt;400
+                  High: ≥0.7 | Medium: 0.4-0.699 | Low: &lt;0.4
                 </small></p>
               </div>
             </div>

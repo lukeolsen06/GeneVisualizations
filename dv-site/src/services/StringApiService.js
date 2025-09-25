@@ -14,7 +14,7 @@ class StringApiService {
     this.defaultParams = {
       species: 10090, // Mus musculus (mouse)
       format: 'json',
-      required_score: 400, // Medium confidence threshold
+      required_score: 400, // Medium confidence threshold (0-1000 scale for API)
     };
   }
 

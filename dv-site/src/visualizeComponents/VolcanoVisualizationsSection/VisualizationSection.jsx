@@ -172,7 +172,6 @@ export default function DEGListDatasets() {
           <div className="all-genes-container">
             <div className="view-pathway">
               <h3 style={{ margin: 30 }}>
-                Interactive STRING Network Analysis
                 <br />
               </h3>
             </div>

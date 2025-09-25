@@ -24,12 +24,12 @@ export function parseTsvResponse(tsvData) {
 
 /**
  * Get confidence level based on score
- * @param {number} score - Interaction score
+ * @param {number} score - Interaction score (0-1 scale from STRING API)
  * @returns {string} Confidence level
  */
 export function getConfidenceLevel(score) {
-  if (score >= 700) return 'high';
-  if (score >= 400) return 'medium';
+  if (score >= 0.7) return 'high';    // 0.7 = 700/1000
+  if (score >= 0.4) return 'medium';  // 0.4 = 400/1000
   return 'low';
 }
 
