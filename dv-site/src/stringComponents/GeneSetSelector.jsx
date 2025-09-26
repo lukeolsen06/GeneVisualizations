@@ -9,7 +9,7 @@ import './GeneSetSelector.css';
  * 
  * Functionality:
  * 1. Loads CSV data from src/graphs/[comparison]/[comparison].DEG.all.csv
- * 2. Applies filtering logic: |log2FC| > 3 AND padj < 0.05
+ * 2. Applies filtering logic: |log2FC| > 1.5 AND padj < 0.1
  * 3. Extracts gene names and converts to lowercase
  * 4. Reports statistics to parent component
  */
@@ -95,10 +95,10 @@ const GeneSetSelector = ({
     });
   };
 
-  // Filter genes based on criteria: (log2FC > 3 OR log2FC < -3) AND padj < 0.05
+  // Filter genes based on criteria: (log2FC > 1.5 OR log2FC < -1.5) AND padj < 0.1
   const filterGenes = (data) => {
-    const log2fcThreshold = 3;
-    const padjThreshold = 0.05;
+    const log2fcThreshold = 1.5;
+    const padjThreshold = 0.1;
     
     const filtered = data.filter(gene => {
       const log2fc = parseFloat(gene.log2FoldChange);
@@ -113,7 +113,8 @@ const GeneSetSelector = ({
 
     // Create gene objects with expression data for color coding
     const geneObjects = filtered.map(gene => ({
-      geneName: gene.gene_name?.toLowerCase(),
+      geneName: gene.gene_name, // Keep original case for STRING API
+      geneNameLower: gene.gene_name?.toLowerCase(), // For display purposes
       log2fc: parseFloat(gene.log2FoldChange),
       padj: parseFloat(gene.padj),
       expression: parseFloat(gene.log2FoldChange) > log2fcThreshold ? 'upregulated' : 'downregulated',
@@ -171,11 +172,11 @@ const GeneSetSelector = ({
           <div className="criteria-list">
             <div className="criterion">
               <span className="criterion-label">Log2 Fold Change:</span>
-              <span className="criterion-value">log2FC &gt; 3 OR log2FC &lt; -3</span>
+              <span className="criterion-value">log2FC &gt; 1.5 OR log2FC &lt; -1.5</span>
             </div>
             <div className="criterion">
               <span className="criterion-label">Adjusted P-value:</span>
-              <span className="criterion-value">padj &lt; 0.05</span>
+              <span className="criterion-value">padj &lt; 0.1</span>
             </div>
           </div>
         </div>
@@ -221,7 +222,7 @@ const GeneSetSelector = ({
                   className={`gene-tag ${gene.expression}`}
                   title={`${gene.geneName} (log2FC: ${gene.log2fc.toFixed(2)}, padj: ${gene.padj.toExponential(2)})`}
                 >
-                  {gene.geneName}
+                  {gene.geneNameLower}
                 </span>
               ))}
               {filteredGenes.length > 10 && (

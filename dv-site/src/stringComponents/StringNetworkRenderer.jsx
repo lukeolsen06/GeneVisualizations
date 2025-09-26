@@ -85,8 +85,13 @@ const StringNetworkRenderer = ({
         .filter(gene => gene.stringId) // Only genes with valid STRING IDs
         .map(gene => gene.stringId);
 
+
       if (stringIds.length === 0) {
-        throw new Error('No valid STRING IDs found in gene set');
+        throw new Error('No valid STRING IDs found in gene set. The genes may not be present in the STRING database.');
+      }
+
+      if (stringIds.length < 2) {
+        throw new Error(`Only ${stringIds.length} gene(s) found in STRING database. At least 2 genes are needed to build a network.`);
       }
 
       console.log(`Fetching network for ${stringIds.length} genes from ${selectedComparison}`);

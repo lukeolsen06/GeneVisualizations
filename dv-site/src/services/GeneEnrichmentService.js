@@ -27,7 +27,14 @@ class GeneEnrichmentService {
       // Create a lookup map for resolved identifiers
       const resolvedLookup = new Map();
       resolvedIds.forEach(item => {
-        resolvedLookup.set(item.preferredName?.toLowerCase(), item);
+        // Map both original query item and preferred name for lookup
+        if (item.queryItem) {
+          resolvedLookup.set(item.queryItem, item);
+        }
+        if (item.preferredName) {
+          resolvedLookup.set(item.preferredName, item);
+          resolvedLookup.set(item.preferredName.toLowerCase(), item);
+        }
       });
 
       // Step 2: Get functional annotations for resolved genes
