@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import GeneSetSelector from './GeneSetSelector';
 import StringNetworkRenderer from './StringNetworkRenderer';
+import ThresholdInputControls from './ThresholdInputControls';
 import GeneEnrichmentService from '../services/GeneEnrichmentService';
 import './StringAnalysisSection.css';
 
@@ -19,6 +20,13 @@ const StringAnalysisSection = () => {
   const [enrichedGenes, setEnrichedGenes] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
+  
+  // State for custom thresholds
+  const [customThresholds, setCustomThresholds] = useState({
+    log2fc: 1.5,
+    padj: 0.1
+  });
+  
   
   // State for network visualization
   const [networkData, setNetworkData] = useState(null);
@@ -78,6 +86,11 @@ const StringAnalysisSection = () => {
 
   // Handle filtered genes from GeneSetSelector
   const handleFilteredGenes = async (geneObjects) => {
+    // Ignore calls when comparison is "-- choose --" (this prevents re-enrichment after clear)
+    if (selectedComparison === '-- choose --') {
+      return;
+    }
+    
     setFilteredGenes(geneObjects);
     setNetworkData(null);
     setSelectedNode(null);
@@ -126,6 +139,34 @@ const StringAnalysisSection = () => {
     setSelectedEdge(null);
   };
 
+  // Handle threshold changes - use useCallback to prevent infinite re-renders
+  const handleThresholdsChange = useCallback((thresholds) => {
+    setCustomThresholds(thresholds);
+  }, []);
+
+  // Handle clear network - reset everything to initial state
+  const handleClearNetwork = useCallback(() => {
+    // Reset all state
+    setSelectedComparison('-- choose --');
+    setCustomThresholds({
+      log2fc: 1.5,
+      padj: 0.1
+    });
+    setFilteredGenes([]);
+    setEnrichedGenes([]);
+    setNetworkData(null);
+    setSelectedNode(null);
+    setSelectedEdge(null);
+    setError(null);
+    setAnalysisStats({
+      totalGenes: 0,
+      filteredGenes: 0,
+      stringResolvedGenes: 0,
+      networkNodes: 0,
+      networkEdges: 0
+    });
+  }, []);
+
   return (
     <div className="string-analysis-section">
       {/* Header */}
@@ -134,6 +175,14 @@ const StringAnalysisSection = () => {
         <p>Analyze protein-protein interactions for differentially expressed genes</p>
       </div>
 
+      {/* Threshold Input Controls */}
+      <ThresholdInputControls
+        onThresholdsChange={handleThresholdsChange}
+        onClearNetwork={handleClearNetwork}
+        initialLog2FC={customThresholds.log2fc}
+        initialPadj={customThresholds.padj}
+      />
+
       {/* Gene Set Selection */}
       <GeneSetSelector
         selectedComparison={selectedComparison}
@@ -141,6 +190,7 @@ const StringAnalysisSection = () => {
         onFilteredGenes={handleFilteredGenes}
         onLoadingChange={handleLoadingChange}
         onError={handleError}
+        customThresholds={customThresholds}
       />
 
       {/* Analysis Statistics */}

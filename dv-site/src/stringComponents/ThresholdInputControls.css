@@ -1,0 +1,146 @@
+.threshold-input-controls {
+  background: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  padding: 20px;
+  margin: 20px 0;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.controls-header {
+  margin-bottom: 20px;
+}
+
+.controls-header h4 {
+  margin: 0 0 8px 0;
+  color: #2c3e50;
+  font-size: 1.2em;
+  font-weight: 600;
+}
+
+.controls-header p {
+  margin: 0;
+  color: #6c757d;
+  font-size: 0.9em;
+  line-height: 1.4;
+}
+
+.input-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.input-group label {
+  font-weight: 600;
+  color: #495057;
+  font-size: 0.95em;
+}
+
+.input-container {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.threshold-input {
+  width: 120px;
+  padding: 8px 12px;
+  border: 2px solid #ced4da;
+  border-radius: 4px;
+  font-size: 0.9em;
+  transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+.threshold-input:focus {
+  outline: none;
+  border-color: #007bff;
+  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+.threshold-input:invalid {
+  border-color: #dc3545;
+}
+
+.input-suffix {
+  font-size: 0.85em;
+  color: #6c757d;
+  font-style: italic;
+  min-width: 120px;
+}
+
+.control-actions {
+  display: flex;
+  justify-content: flex-start;
+  gap: 12px;
+  margin-top: 10px;
+}
+
+.reset-button {
+  background-color: #6c757d;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  font-size: 0.9em;
+  cursor: pointer;
+  transition: background-color 0.15s ease-in-out;
+}
+
+.reset-button:hover {
+  background-color: #5a6268;
+}
+
+.reset-button:active {
+  background-color: #545b62;
+}
+
+.clear-network-button {
+  background-color: #dc3545;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  font-size: 0.9em;
+  cursor: pointer;
+  transition: background-color 0.15s ease-in-out;
+}
+
+.clear-network-button:hover {
+  background-color: #c82333;
+}
+
+.clear-network-button:active {
+  background-color: #bd2130;
+}
+
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .threshold-input-controls {
+    padding: 15px;
+    margin: 15px 0;
+  }
+  
+  .input-container {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .threshold-input {
+    width: 100%;
+    max-width: 200px;
+  }
+  
+  .input-suffix {
+    min-width: auto;
+  }
+  
+}

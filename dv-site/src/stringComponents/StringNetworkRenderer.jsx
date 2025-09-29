@@ -30,7 +30,7 @@ const StringNetworkRenderer = ({
   onEdgeClick,          // Callback: (edgeData) => void
   onClearSelection,     // Callback: () => void - clear selected node/edge
   onLoadingChange,      // Callback: (loading) => void
-  onError              // Callback: (errorMessage) => void
+  onError,              // Callback: (errorMessage) => void
 }) => {
   const containerRef = useRef(null);
   const cyRef = useRef(null);
@@ -58,6 +58,7 @@ const StringNetworkRenderer = ({
       clearNetwork();
     };
   }, []);
+
 
   /**
    * Clear the current network instance
