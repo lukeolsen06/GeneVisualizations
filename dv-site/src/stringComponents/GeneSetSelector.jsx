@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useImperativeHandle, forwardRef } from 'react';
 import Dropdown from '../visualizeComponents/DropDown';
 import { dropdownOptions } from '../visualizeComponents/VolcanoVisualizationsSection/imports';
 import './GeneSetSelector.css';
@@ -13,13 +13,14 @@ import './GeneSetSelector.css';
  * 3. Extracts gene names and converts to lowercase
  * 4. Reports statistics to parent component
  */
-const GeneSetSelector = ({ 
+const GeneSetSelector = forwardRef(({ 
   selectedComparison, 
   onComparisonChange, 
   onFilteredGenes, 
   onLoadingChange, 
-  onError 
-}) => {
+  onError,
+  customThresholds
+}, ref) => {
   const [csvData, setCsvData] = useState(null);
   const [filteredGenes, setFilteredGenes] = useState([]);
   const [filteringStats, setFilteringStats] = useState({
@@ -53,6 +54,22 @@ const GeneSetSelector = ({
       filterGenes(csvData);
     }
   }, [csvData]);
+
+  // Re-filter genes when custom thresholds change
+  useEffect(() => {
+    if (csvData && customThresholds) {
+      filterGenes(csvData);
+    }
+  }, [customThresholds]);
+
+  // Expose methods to parent component
+  useImperativeHandle(ref, () => ({
+    reFilterGenes: () => {
+      if (csvData) {
+        filterGenes(csvData);
+      }
+    }
+  }));
 
   // Load CSV data from the graphs directory
   const loadCsvData = async (comparison) => {
@@ -95,10 +112,10 @@ const GeneSetSelector = ({
     });
   };
 
-  // Filter genes based on criteria: (log2FC > 1.5 OR log2FC < -1.5) AND padj < 0.1
+  // Filter genes based on criteria: (log2FC > threshold OR log2FC < -threshold) AND padj < threshold
   const filterGenes = (data) => {
-    const log2fcThreshold = 1.5;
-    const padjThreshold = 0.1;
+    const log2fcThreshold = customThresholds?.log2fc || 1.5;
+    const padjThreshold = customThresholds?.padj || 0.1;
     
     const filtered = data.filter(gene => {
       const log2fc = parseFloat(gene.log2FoldChange);
@@ -172,11 +189,11 @@ const GeneSetSelector = ({
           <div className="criteria-list">
             <div className="criterion">
               <span className="criterion-label">Log2 Fold Change:</span>
-              <span className="criterion-value">log2FC &gt; 1.5 OR log2FC &lt; -1.5</span>
+              <span className="criterion-value">log2FC &gt; {customThresholds?.log2fc || 1.5} OR log2FC &lt; -{customThresholds?.log2fc || 1.5}</span>
             </div>
             <div className="criterion">
               <span className="criterion-label">Adjusted P-value:</span>
-              <span className="criterion-value">padj &lt; 0.1</span>
+              <span className="criterion-value">padj &lt; {customThresholds?.padj || 0.1}</span>
             </div>
           </div>
         </div>
@@ -241,6 +258,6 @@ const GeneSetSelector = ({
       )}
     </div>
   );
-};
+});
 
 export default GeneSetSelector;

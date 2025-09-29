@@ -83,6 +83,28 @@
   margin-top: 10px;
 }
 
+.apply-button {
+  background-color: #007bff;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  font-size: 0.9em;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.15s ease-in-out, transform 0.1s ease-in-out;
+}
+
+.apply-button:hover {
+  background-color: #0056b3;
+  transform: translateY(-1px);
+}
+
+.apply-button:active {
+  background-color: #004085;
+  transform: translateY(0);
+}
+
 .reset-button {
   background-color: #6c757d;
   color: white;

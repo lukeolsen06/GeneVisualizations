@@ -9,6 +9,7 @@ import './ThresholdInputControls.css';
 const ThresholdInputControls = ({ 
   onThresholdsChange, 
   onClearNetwork,
+  onApplyThresholds,
   initialLog2FC = 1.5, 
   initialPadj = 0.1 
 }) => {
@@ -17,29 +18,19 @@ const ThresholdInputControls = ({
   const [tempLog2fc, setTempLog2fc] = useState(initialLog2FC.toString());
   const [tempPadj, setTempPadj] = useState(initialPadj.toString());
 
-  // Validate and set log2FC threshold
+  // Validate and set log2FC threshold (without notifying parent)
   const validateAndSetLog2FC = (value) => {
     const numericValue = parseFloat(value);
     if (!isNaN(numericValue) && numericValue >= 0) {
       setLog2fcThreshold(numericValue);
-      // Notify parent immediately when threshold changes
-      onThresholdsChange({
-        log2fc: numericValue,
-        padj: padjThreshold
-      });
     }
   };
 
-  // Validate and set p-value threshold
+  // Validate and set p-value threshold (without notifying parent)
   const validateAndSetPadj = (value) => {
     const numericValue = parseFloat(value);
     if (!isNaN(numericValue) && numericValue > 0 && numericValue <= 1) {
       setPadjThreshold(numericValue);
-      // Notify parent immediately when threshold changes
-      onThresholdsChange({
-        log2fc: log2fcThreshold,
-        padj: numericValue
-      });
     }
   };
 
@@ -71,17 +62,29 @@ const ThresholdInputControls = ({
     }
   };
 
+  // Apply current thresholds
+  const applyThresholds = () => {
+    const thresholds = {
+      log2fc: log2fcThreshold,
+      padj: padjThreshold
+    };
+    onThresholdsChange(thresholds);
+    onApplyThresholds(thresholds);
+  };
+
   // Reset to default values
   const resetToDefaults = () => {
     setLog2fcThreshold(1.5);
     setPadjThreshold(0.1);
     setTempLog2fc('1.5');
     setTempPadj('0.1');
-    // Notify parent of reset
-    onThresholdsChange({
+    // Apply the reset values immediately
+    const thresholds = {
       log2fc: 1.5,
       padj: 0.1
-    });
+    };
+    onThresholdsChange(thresholds);
+    onApplyThresholds(thresholds);
   };
 
   return (
@@ -135,6 +138,13 @@ const ThresholdInputControls = ({
         </div>
 
         <div className="control-actions">
+          <button 
+            type="button" 
+            onClick={applyThresholds}
+            className="apply-button"
+          >
+            Set Changes
+          </button>
           <button 
             type="button" 
             onClick={resetToDefaults}

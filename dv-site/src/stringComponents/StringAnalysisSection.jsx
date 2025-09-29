@@ -14,6 +14,9 @@ import './StringAnalysisSection.css';
  * 4. Interactive node/edge information display
  */
 const StringAnalysisSection = () => {
+  // Refs
+  const geneSetSelectorRef = useRef(null);
+  
   // State for the analysis workflow
   const [selectedComparison, setSelectedComparison] = useState('-- choose --');
   const [filteredGenes, setFilteredGenes] = useState([]);
@@ -54,7 +57,7 @@ const StringAnalysisSection = () => {
   };
 
   // Enrich genes with STRING API data using the service
-  const enrichGenesWithStringData = async (geneObjects) => {
+  const enrichGenesWithStringData = useCallback(async (geneObjects) => {
     if (geneObjects.length === 0) return [];
 
     setIsLoading(true);
@@ -82,7 +85,7 @@ const StringAnalysisSection = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
   // Handle filtered genes from GeneSetSelector
   const handleFilteredGenes = async (geneObjects) => {
@@ -144,6 +147,23 @@ const StringAnalysisSection = () => {
     setCustomThresholds(thresholds);
   }, []);
 
+  // Handle threshold application - trigger re-filtering in GeneSetSelector
+  const handleApplyThresholds = useCallback((thresholds) => {
+    if (selectedComparison === '-- choose --') {
+      return;
+    }
+    
+    // Clear current network state
+    setNetworkData(null);
+    setSelectedNode(null);
+    setSelectedEdge(null);
+    
+    // Trigger re-filtering in GeneSetSelector
+    if (geneSetSelectorRef.current) {
+      geneSetSelectorRef.current.reFilterGenes();
+    }
+  }, [selectedComparison]);
+
   // Handle clear network - reset everything to initial state
   const handleClearNetwork = useCallback(() => {
     // Reset all state
@@ -178,6 +198,7 @@ const StringAnalysisSection = () => {
       {/* Threshold Input Controls */}
       <ThresholdInputControls
         onThresholdsChange={handleThresholdsChange}
+        onApplyThresholds={handleApplyThresholds}
         onClearNetwork={handleClearNetwork}
         initialLog2FC={customThresholds.log2fc}
         initialPadj={customThresholds.padj}
@@ -185,6 +206,7 @@ const StringAnalysisSection = () => {
 
       {/* Gene Set Selection */}
       <GeneSetSelector
+        ref={geneSetSelectorRef}
         selectedComparison={selectedComparison}
         onComparisonChange={handleComparisonChange}
         onFilteredGenes={handleFilteredGenes}
