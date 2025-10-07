@@ -39,11 +39,11 @@ import appConfig from './config/app.config';
       useClass: DatabaseConfig,
     }),
 
-    // Cache module - Redis configuration for caching
-    CacheModule.registerAsync({
-      useClass: RedisConfig,
-      isGlobal: true, // Makes cache available everywhere
-    }),
+    // Cache module - Redis configuration for caching (temporarily disabled for testing)
+    // CacheModule.registerAsync({
+    //   useClass: RedisConfig,
+    //   isGlobal: true, // Makes cache available everywhere
+    // }),
 
     // Feature modules (we'll create these step by step)
     DatasetsModule,

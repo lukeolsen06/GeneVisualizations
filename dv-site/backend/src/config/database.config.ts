@@ -25,7 +25,7 @@ export class DatabaseConfig implements TypeOrmOptionsFactory {
       database: this.configService.get<string>('DB_NAME', 'gene_visualizations'),
       
       // Auto-load entities from the entities directory
-      entities: [__dirname + '/../**/*.entity{.ts,.js}'],
+      entities: [__dirname + '/../modules/datasets/entities/*.entity{.ts,.js}'],
       
       // Development settings
       synchronize: this.configService.get<boolean>('DB_SYNCHRONIZE', false), // Don't auto-sync in production

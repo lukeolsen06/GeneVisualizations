@@ -20,7 +20,7 @@ export class RedisConfig implements CacheOptionsFactory {
     // This will be updated when we implement the caching layer
     return {
       ttl: this.configService.get<number>('CACHE_TTL', 3600), // 1 hour default
-      max: this.configService.get<number>('CACHE_MAX', 1000), // Maximum number of items
+      max: this.configService.get<number>('CACHE_MAX', 10000), // Maximum number of items (increased to avoid error)
     };
   }
 }

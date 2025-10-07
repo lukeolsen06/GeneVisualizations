@@ -1,21 +1,16 @@
 import { Entity, Column, PrimaryColumn } from 'typeorm';
 
 /**
- * Dynamic RNA-seq Entity Factory
+ * RNA-seq Entity
  * 
- * This approach handles the dynamic column structure by:
- * 1. Defining core columns that are always present
- * 2. Using TypeORM's table name mapping for different comparisons
- * 3. Allowing flexible querying of dynamic columns
+ * This entity represents the core structure of RNA-seq data tables.
+ * It includes all the common columns that exist across all comparison tables.
  * 
- * Key Concepts:
- * - Each comparison gets its own table (eIF5A_DDvsWT_EC, etc.)
- * - Core columns are typed, dynamic columns are accessed via raw queries
- * - TypeORM can map to different table names dynamically
+ * For dynamic columns (like different SHEF samples), we'll use raw SQL queries.
+ * This approach provides type safety for core columns while maintaining flexibility.
  */
-
-// Core columns that are always present in all datasets
-export class BaseRnaSeqEntity {
+@Entity()
+export class RnaSeqEntity {
   // Gene identification
   @PrimaryColumn({ name: 'gene_id', type: 'varchar', length: 50 })
   geneId!: string;
@@ -61,21 +56,10 @@ export class BaseRnaSeqEntity {
   log10Padj!: number;
 }
 
-// Factory function to create entity for specific comparison
-export function createRnaSeqEntity(tableName: string) {
-  @Entity({ name: tableName })
-  class DynamicRnaSeqEntity extends BaseRnaSeqEntity {
-    // Dynamic columns will be handled via raw queries
-    // This entity provides the core structure and type safety
-  }
-
-  return DynamicRnaSeqEntity;
-}
-
 // Type for dynamic data (for when we need to handle unknown columns)
-export interface DynamicRnaSeqData extends BaseRnaSeqEntity {
+export interface DynamicRnaSeqData extends RnaSeqEntity {
   [key: string]: any; // Allows for dynamic SHEF columns
 }
 
 // Helper type for query results with dynamic columns
-export type RnaSeqQueryResult = BaseRnaSeqEntity & Record<string, any>;
+export type RnaSeqQueryResult = RnaSeqEntity & Record<string, any>;
