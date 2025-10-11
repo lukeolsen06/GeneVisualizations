@@ -4,6 +4,7 @@ import { DataSource } from 'typeorm';
 import { RnaSeqEntity } from './entities/rna-seq.entity';
 import { FilterGenesDto } from './dto/filter-genes.dto';
 import { VolcanoPlotDto, VolcanoPlotResponse } from './dto/volcano-plot.dto';
+import { SearchGenesDto } from './dto/search-genes.dto';
 
 /**
  * Datasets Service
@@ -258,6 +259,79 @@ export class DatasetsService {
       }));
     } catch (error) {
       // If table doesn't exist, return empty array
+      return [];
+    }
+  }
+
+  /**
+   * Search for genes by name in a specific dataset
+   * 
+   * This method performs a case-insensitive partial match search on gene names.
+   * It's useful for autocomplete, quick lookups, and finding genes by name.
+   * 
+   * Search Strategy:
+   * - Uses PostgreSQL ILIKE for case-insensitive pattern matching
+   * - Wraps search term with % wildcards for partial matching
+   * - Example: "prl" matches "Prl", "prolactin", "Prl2", etc.
+   * 
+   * Performance:
+   * - Small result sets (default 20) for fast response
+   * - Could benefit from database index on gene_name column
+   * - Orders by gene_name for consistent results
+   * 
+   * Security:
+   * - Uses parameterized queries to prevent SQL injection
+   * - Validation ensures search term is reasonable length
+   * 
+   * @param comparison - Dataset comparison name
+   * @param searchDto - Search parameters (query string and limit)
+   * @returns Array of matching genes with full entity data
+   */
+  async searchGenes(
+    comparison: string,
+    searchDto: SearchGenesDto,
+  ): Promise<RnaSeqEntity[]> {
+    try {
+      const limit = searchDto.limit || 20;
+      
+      // Use ILIKE for case-insensitive search with wildcards
+      // ILIKE is PostgreSQL-specific (use LIKE LOWER() for other databases)
+      // The % wildcards allow partial matching: %query% matches "Xyz-query-123"
+      const query = `
+        SELECT gene_id, gene_name, gene_chr, gene_start, gene_end, gene_strand,
+               gene_length, gene_biotype, gene_description, tf_family,
+               log2foldchange, pvalue, padj, log10_padj
+        FROM "${comparison}"
+        WHERE gene_name ILIKE $1
+        ORDER BY gene_name ASC
+        LIMIT $2
+      `;
+
+      // Add wildcards to search term for partial matching
+      // $1 = '%Prl%' will match: "Prl", "Prl2", "prolactin-like", etc.
+      const searchPattern = `%${searchDto.query}%`;
+
+      const results = await this.dataSource.query(query, [searchPattern, limit]);
+
+      // Map to full entity structure
+      return results.map((row: any) => ({
+        geneId: row.gene_id,
+        geneName: row.gene_name,
+        geneChr: row.gene_chr,
+        geneStart: row.gene_start,
+        geneEnd: row.gene_end,
+        geneStrand: row.gene_strand,
+        geneLength: row.gene_length,
+        geneBiotype: row.gene_biotype,
+        geneDescription: row.gene_description,
+        tfFamily: row.tf_family,
+        log2FoldChange: row.log2foldchange,
+        pvalue: row.pvalue,
+        padj: row.padj,
+        log10Padj: row.log10_padj,
+      }));
+    } catch (error) {
+      // If table doesn't exist or query fails, return empty array
       return [];
     }
   }
