@@ -18,11 +18,11 @@ export class DatabaseConfig implements TypeOrmOptionsFactory {
   createTypeOrmOptions(): TypeOrmModuleOptions {
     return {
       type: 'postgres',
-      host: this.configService.get<string>('DB_HOST', 'localhost'),
-      port: this.configService.get<number>('DB_PORT', 5431),
-      username: this.configService.get<string>('DB_USERNAME', 'gene_admin'),
-      password: this.configService.get<string>('DB_PASSWORD', 'gene_password_2024'),
-      database: this.configService.get<string>('DB_NAME', 'gene_visualizations'),
+      host: this.configService.get<string>('DB_HOST'),
+      port: this.configService.get<number>('DB_PORT'),
+      username: this.configService.getOrThrow<string>('DB_USERNAME'),
+      password: this.configService.getOrThrow<string>('DB_PASSWORD'),
+      database: this.configService.get<string>('DB_NAME'),
       
       // Auto-load entities from the entities directory
       entities: [__dirname + '/../modules/datasets/entities/*.entity{.ts,.js}'],
