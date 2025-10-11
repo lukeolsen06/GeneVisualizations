@@ -2,6 +2,7 @@ import { Controller, Get, Param, Query } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiParam } from '@nestjs/swagger';
 import { DatasetsService } from './datasets.service';
 import { FilterGenesDto } from './dto/filter-genes.dto';
+import { VolcanoPlotDto, VolcanoPlotResponse } from './dto/volcano-plot.dto';
 
 /**
  * Datasets Controller
@@ -44,6 +45,44 @@ export class DatasetsController {
   @ApiParam({ name: 'comparison', description: 'Dataset comparison name' })
   async getDatasetInfo(@Param('comparison') comparison: string) {
     return this.datasetsService.getDatasetInfo(comparison);
+  }
+
+  /**
+   * GET /api/datasets/:comparison/genes/volcano
+   * Returns lightweight gene data optimized for volcano plot visualizations
+   * 
+   * Volcano Plot Endpoint Purpose:
+   * - Returns ALL genes (not just significant ones) for complete visualization
+   * - Lightweight response: Only 5 fields vs 14 (80% smaller)
+   * - Optimized for plotting: X-axis (log2fc), Y-axis (-log10 pvalue)
+   * 
+   * Key Differences from Other Endpoints:
+   * - No filtering (volcano plots need all data points)
+   * - Higher default limit (5000 vs 100)
+   * - Minimal fields for performance
+   * 
+   * Frontend Usage:
+   * - Plot all genes to show distribution
+   * - Color-code by significance (padj < 0.05)
+   * - Interactive tooltips with gene name
+   * 
+   * Example: GET /api/datasets/eIF5A_DDvsWT_EC/genes/volcano?limit=10000
+   */
+  @Get(':comparison/genes/volcano')
+  @ApiOperation({ 
+    summary: 'Get volcano plot data',
+    description: 'Returns lightweight gene data optimized for volcano plot visualization'
+  })
+  @ApiParam({ 
+    name: 'comparison', 
+    description: 'Dataset comparison name',
+    example: 'eIF5A_DDvsWT_EC'
+  })
+  async getVolcanoPlotData(
+    @Param('comparison') comparison: string,
+    @Query() options: VolcanoPlotDto,
+  ): Promise<VolcanoPlotResponse[]> {
+    return this.datasetsService.getVolcanoPlotData(comparison, options);
   }
 
   /*
