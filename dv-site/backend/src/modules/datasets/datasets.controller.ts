@@ -3,6 +3,8 @@ import { ApiTags, ApiOperation, ApiParam } from '@nestjs/swagger';
 import { DatasetsService } from './datasets.service';
 import { FilterGenesDto } from './dto/filter-genes.dto';
 import { VolcanoPlotDto, VolcanoPlotResponse } from './dto/volcano-plot.dto';
+import { SearchGenesDto } from './dto/search-genes.dto';
+import { RnaSeqEntity } from './entities/rna-seq.entity';
 
 /**
  * Datasets Controller
@@ -83,6 +85,45 @@ export class DatasetsController {
     @Query() options: VolcanoPlotDto,
   ): Promise<VolcanoPlotResponse[]> {
     return this.datasetsService.getVolcanoPlotData(comparison, options);
+  }
+
+  /**
+   * GET /api/datasets/:comparison/genes/search
+   * Search for genes by name (case-insensitive partial match)
+   * 
+   * Search Endpoint Purpose:
+   * - Find genes by name quickly (autocomplete/typeahead)
+   * - Case-insensitive: "prl" matches "Prl", "PRL", "prolactin"
+   * - Partial matching: "insulin" matches "insulin-like-receptor"
+   * - Small result sets for fast response (default 20 results)
+   * 
+   * Use Cases:
+   * - User wants to check if a specific gene is in the dataset
+   * - Frontend autocomplete dropdown
+   * - Quick gene lookup by name
+   * - Finding related genes (e.g., all genes containing "insulin")
+   * 
+   * Query Parameters:
+   * - query (required): The gene name to search for
+   * - limit (optional): Max results (default 20, max 100)
+   * 
+   * Example: GET /api/datasets/eIF5A_DDvsWT_EC/genes/search?query=Prl&limit=10
+   */
+  @Get(':comparison/genes/search')
+  @ApiOperation({ 
+    summary: 'Search genes by name',
+    description: 'Find genes by name using case-insensitive partial matching'
+  })
+  @ApiParam({ 
+    name: 'comparison', 
+    description: 'Dataset comparison name',
+    example: 'eIF5A_DDvsWT_EC'
+  })
+  async searchGenes(
+    @Param('comparison') comparison: string,
+    @Query() searchDto: SearchGenesDto,
+  ): Promise<RnaSeqEntity[]> {
+    return this.datasetsService.searchGenes(comparison, searchDto);
   }
 
   /*
