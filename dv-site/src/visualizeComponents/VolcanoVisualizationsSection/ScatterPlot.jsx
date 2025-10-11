@@ -3,6 +3,7 @@ import React, { useState, useEffect } from "react";
 import PlotlyJSPlot from "../../graphs/PlotlyJSPlot";
 import "../../graphs/PlotlyGraph.css";
 import Toggle from "../ToggleGraphComponent";
+import DatasetService from "../../services/DatasetService";
 
 import { chartDataMapping, plotDataMapping } from "./imports";
 
@@ -21,6 +22,8 @@ export default function DEGListDatasets({ currentDropdown }) {
   const [disableInput, setDisableInput] = useState(false);
   const [log2FoldThreshold, setLog2FoldThreshold] = useState("0");
   const [tempLog2Fold, setTempLog2Fold] = useState("1");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     const mainCategory =
@@ -63,87 +66,26 @@ export default function DEGListDatasets({ currentDropdown }) {
 
   useEffect(() => {
     async function loadGraphData() {
-      if (dataFromChild === "All Genes" && selectedDropdown != "-- choose --") {
-        let module;
-        switch (selectedDropdown) {
-          case "DHS_DOHHvsWT_EC":
-            module = await import(
-              "../../graphs/DHS_DOHHvsWT_EC/DHS_DOHHvsWT_EC.DEG.all.json"
-            );
-
-            break;
-          case "DHS_DOHHvsTar4_EC":
-            module = await import(
-              "../../graphs/DHS_DOHHvsTar4_EC/DHS_DOHHvsTar4_EC.DEG.all.json"
-            );
-            break;
-          case "eIF5A_DDvsDHS_DOHH":
-            module = await import(
-              "../../graphs/eIF5A_DDvsDHS_DOHH/eIF5A_DDvsDHS_DOHH.DEG.all.json"
-            );
-            break;
-
-          case "eIF5A_DDvseIF5A":
-            module = await import(
-              "../../graphs/eIF5A_DDvseIF5A/eIF5A_DDvseIF5A.DEG.all.json"
-            );
-            break;
-          case "eIF5A_DDvsK50A_DD":
-            module = await import(
-              "../../graphs/eIF5A_DDvsK50A_DD/eIF5A_DDvsK50A_DD.DEG.all.json"
-            );
-            break;
-          case "eIF5A_DDvsTar4_EC":
-            module = await import(
-              "../../graphs/eIF5A_DDvsTar4_EC/eIF5A_DDvsTar4_EC.DEG.all.json"
-            );
-            break;
-          case "eIF5A_DDvsWT_EC":
-            module = await import(
-              "../../graphs/eIF5A_DDvsWT_EC/eIF5A_DDvsWT_EC.DEG.all.json"
-            );
-            break;
-          case "eIF5AvsTar4_EC":
-            module = await import(
-              "../../graphs/eIF5AvsTar4_EC/eIF5AvsTar4_EC.DEG.all.json"
-            );
-            break;
-          case "eIF5AvsWT_EC":
-            module = await import(
-              "../../graphs/eIF5AvsWT_EC/eIF5AvsWT_EC.DEG.all.json"
-            );
-            break;
-          case "K50A_DDvsDHS_DOHH":
-            module = await import(
-              "../../graphs/K50A_DDvsDHS_DOHH/K50A_DDvsDHS_DOHH.DEG.all.json"
-            );
-            break;
-          case "K50A_DDvsTar4_EC":
-            module = await import(
-              "../../graphs/K50A_DDvsTar4_EC/K50A_DDvsTar4_EC.DEG.all.json"
-            );
-            break;
-          case "K50A_DDvsWT_EC":
-            module = await import(
-              "../../graphs/K50A_DDvsWT_EC/K50A_DDvsWT_EC.DEG.all.json"
-            );
-            break;
-          case "Tar4_ECvsWT_EC":
-            module = await import(
-              "../../graphs/Tar4_ECvsWT_EC/Tar4_ECvsWT_EC.DEG.all.json"
-            );
-            break;
-          default:
-            module = await import(
-              "../../graphs/K50A_DDvsTar4_EC/K50A_DDvsTar4_EC.DEG.all.json"
-            );
+      if (dataFromChild === "All Genes" && selectedDropdown !== "-- choose --") {
+        setLoading(true);
+        setError(null);
+        
+        try {
+          // Fetch volcano plot data from the backend API
+          // Using a limit of 10000 for comprehensive volcano plot visualization
+          const data = await DatasetService.getVolcanoPlotData(selectedDropdown, 10000);
+          setGraphModule(data);
+        } catch (err) {
+          console.error("Failed to load gene data:", err);
+          setError(err.message || "Failed to load data from server");
+          setGraphModule(null);
+        } finally {
+          setLoading(false);
         }
-
-        setGraphModule(module.default);
       }
     }
     loadGraphData();
-  }, [dataFromChild, selectedDropdown, graphModule]);
+  }, [dataFromChild, selectedDropdown]);
 
   return (
     <div className="DEG-container-expanded">
@@ -170,7 +112,38 @@ export default function DEGListDatasets({ currentDropdown }) {
                   {selectedDropdown}
                 </p>
 
-                {graphModule ? (
+                {loading ? (
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "center",
+                      alignItems: "center",
+                      width: "100%",
+                      height: "100px",
+                      color: "black",
+                      fontSize: "30px",
+                      textAlign: "center",
+                    }}
+                  >
+                    Loading data from server...
+                  </div>
+                ) : error ? (
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "center",
+                      alignItems: "center",
+                      width: "100%",
+                      height: "100px",
+                      color: "red",
+                      fontSize: "20px",
+                      textAlign: "center",
+                      padding: "20px",
+                    }}
+                  >
+                    Error: {error}
+                  </div>
+                ) : graphModule ? (
                   <>
                     <PlotlyJSPlot
                       data={graphModule}
@@ -192,7 +165,7 @@ export default function DEGListDatasets({ currentDropdown }) {
                       textAlign: "center",
                     }}
                   >
-                    Loading...
+                    Select a dataset to visualize
                   </div>
                 )}
               </>
