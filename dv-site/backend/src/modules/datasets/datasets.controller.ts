@@ -1,6 +1,7 @@
 import { Controller, Get, Param, Query } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiParam, ApiQuery } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiParam } from '@nestjs/swagger';
 import { DatasetsService } from './datasets.service';
+import { FilterGenesDto } from './dto/filter-genes.dto';
 
 /**
  * Datasets Controller
@@ -45,6 +46,38 @@ export class DatasetsController {
     return this.datasetsService.getDatasetInfo(comparison);
   }
 
+  /*
+   * GET /api/datasets/:comparison/genes/filtered
+   * Returns filtered genes based on p-value, fold change, and direction
+   * 
+   * This endpoint uses our FilterGenesDto for automatic validation.
+   * NestJS will automatically:
+   * 1. Extract all query parameters
+   * 2. Transform strings to proper types (string -> number)
+   * 3. Validate against our DTO rules
+   * 4. Return 400 error if validation fails
+   * 
+   * Example: GET /api/datasets/eIF5A_DDvsWT_EC/genes/filtered?padj=0.01&log2fc=2&direction=up&limit=50
+   */
+  @Get(':comparison/genes/filtered')
+  @ApiOperation({ 
+    summary: 'Get filtered genes from dataset',
+    description: 'Filter genes by p-value, adjusted p-value, log2 fold change, and expression direction'
+  })
+  @ApiParam({ 
+    name: 'comparison', 
+    description: 'Dataset comparison name (e.g., eIF5A_DDvsWT_EC)',
+    example: 'eIF5A_DDvsWT_EC'
+  })
+  async getFilteredGenes(
+    @Param('comparison') comparison: string,
+    @Query() filters: FilterGenesDto,  // ← This is where the magic happens!
+  ) {
+    // The filters parameter is already validated and typed!
+    // No need for manual parsing or validation
+    return this.datasetsService.getFilteredGenes(comparison, filters);
+  }
+
   /**
    * GET /api/datasets/:comparison/genes
    * Returns genes from a specific dataset with optional pagination
@@ -54,7 +87,6 @@ export class DatasetsController {
   @Get(':comparison/genes')
   @ApiOperation({ summary: 'Get genes from dataset' })
   @ApiParam({ name: 'comparison', description: 'Dataset comparison name' })
-  @ApiQuery({ name: 'limit', required: false, description: 'Number of genes to return' })
   async getGenes(
     @Param('comparison') comparison: string,
     @Query('limit') limit?: string,
