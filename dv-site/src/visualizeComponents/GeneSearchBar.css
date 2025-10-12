@@ -1,0 +1,428 @@
+/**
+ * GeneSearchBar Component Styles
+ * 
+ * Structure:
+ * 1. Container and Input
+ * 2. Loading and Clear buttons
+ * 3. Dropdown and Results
+ * 4. States (hover, selected, error)
+ * 5. Responsive adjustments
+ */
+
+/* ============================================================================
+   CONTAINER
+   ============================================================================ */
+
+/**
+ * Main container for the search component
+ * Uses relative positioning so the dropdown can be absolutely positioned
+ */
+.gene-search-container {
+  position: relative;
+  width: 100%;
+  max-width: 500px;
+  margin: 0 auto;
+  font-family: 'EB Garamond', serif;
+}
+
+/* ============================================================================
+   INPUT WRAPPER AND INPUT
+   ============================================================================ */
+
+/**
+ * Wrapper for the input field
+ * Contains the input, loading spinner, and clear button
+ */
+.gene-search-input-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+/**
+ * Main search input field
+ */
+.gene-search-input {
+  width: 100%;
+  padding: 12px 45px 12px 15px; /* Extra padding on right for buttons */
+  font-size: 16px;
+  font-family: 'EB Garamond', serif;
+  border: 2px solid #d3d3d3;
+  border-radius: 8px;
+  outline: none;
+  transition: all 0.2s ease;
+  background-color: white;
+  box-sizing: border-box;
+}
+
+/**
+ * Input focus state - highlight with blue border
+ */
+.gene-search-input:focus {
+  border-color: #4a90e2;
+  box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.1);
+}
+
+/**
+ * Placeholder text styling
+ */
+.gene-search-input::placeholder {
+  color: #999;
+  font-style: italic;
+}
+
+/* ============================================================================
+   LOADING SPINNER AND CLEAR BUTTON
+   ============================================================================ */
+
+/**
+ * Loading spinner (⏳ emoji)
+ * Positioned absolutely inside the input on the right side
+ */
+.gene-search-loading {
+  position: absolute;
+  right: 15px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 18px;
+  pointer-events: none; /* Don't block clicks */
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+/**
+ * Pulse animation for loading spinner
+ */
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+/**
+ * Clear button (✕ icon)
+ * Positioned absolutely inside the input on the right side
+ */
+.gene-search-clear {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  font-size: 20px;
+  color: #999;
+  cursor: pointer;
+  padding: 5px;
+  line-height: 1;
+  transition: color 0.2s ease;
+}
+
+.gene-search-clear:hover {
+  color: #333;
+}
+
+.gene-search-clear:active {
+  transform: translateY(-50%) scale(0.9);
+}
+
+/* ============================================================================
+   ERROR MESSAGE
+   ============================================================================ */
+
+/**
+ * Error message display
+ * Shows below the input when search fails
+ */
+.gene-search-error {
+  margin-top: 8px;
+  padding: 10px;
+  background-color: #fee;
+  color: #c33;
+  border: 1px solid #fcc;
+  border-radius: 6px;
+  font-size: 14px;
+  text-align: center;
+}
+
+/* ============================================================================
+   DROPDOWN CONTAINER
+   ============================================================================ */
+
+/**
+ * Dropdown container for search results
+ * Positioned absolutely below the input
+ */
+.gene-search-dropdown {
+  position: absolute;
+  top: calc(100% + 5px); /* 5px gap below input */
+  left: 0;
+  right: 0;
+  background: white;
+  border: 2px solid #d3d3d3;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  max-height: 400px;
+  overflow-y: auto;
+  z-index: 1000; /* Ensure it appears above other content */
+  animation: slideDown 0.2s ease;
+}
+
+/**
+ * Slide down animation for dropdown
+ */
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/**
+ * Results header (shows count)
+ */
+.gene-search-results-header {
+  padding: 10px 15px;
+  background-color: #f8f9fa;
+  border-bottom: 1px solid #e9ecef;
+  font-size: 13px;
+  font-weight: 600;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* ============================================================================
+   RESULTS LIST
+   ============================================================================ */
+
+/**
+ * Unordered list of results
+ */
+.gene-search-results {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+/**
+ * Individual result item
+ */
+.gene-search-result-item {
+  padding: 12px 15px;
+  cursor: pointer;
+  border-bottom: 1px solid #f0f0f0;
+  transition: background-color 0.15s ease;
+}
+
+/**
+ * Remove border from last item
+ */
+.gene-search-result-item:last-child {
+  border-bottom: none;
+}
+
+/**
+ * Hover state - light gray background
+ */
+.gene-search-result-item:hover {
+  background-color: #f8f9fa;
+}
+
+/**
+ * Selected state (keyboard navigation) - blue background
+ */
+.gene-search-result-item.selected {
+  background-color: #e3f2fd;
+}
+
+/**
+ * Active state (clicking) - darker blue
+ */
+.gene-search-result-item:active {
+  background-color: #bbdefb;
+}
+
+/* ============================================================================
+   RESULT ITEM CONTENT
+   ============================================================================ */
+
+/**
+ * Main row: gene name and ID
+ */
+.gene-result-main {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 6px;
+}
+
+/**
+ * Gene name (left side, bold, larger)
+ */
+.gene-result-name {
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+}
+
+/**
+ * Gene ID (right side, smaller, gray)
+ */
+.gene-result-id {
+  font-size: 12px;
+  color: #999;
+  font-family: monospace;
+}
+
+/**
+ * Statistics row: log2FC and p-value
+ */
+.gene-result-stats {
+  display: flex;
+  gap: 20px;
+  font-size: 13px;
+  color: #666;
+}
+
+/**
+ * Individual stat item
+ */
+.gene-result-stat {
+  display: flex;
+  gap: 5px;
+}
+
+/**
+ * Bold values in stats
+ */
+.gene-result-stat strong {
+  color: #333;
+  font-weight: 600;
+}
+
+/* ============================================================================
+   NO RESULTS MESSAGE
+   ============================================================================ */
+
+/**
+ * Message shown when no genes match the search
+ */
+.gene-search-no-results {
+  padding: 20px;
+  text-align: center;
+  color: #999;
+  font-size: 14px;
+  font-style: italic;
+}
+
+/* ============================================================================
+   SCROLLBAR STYLING (for dropdown)
+   ============================================================================ */
+
+/**
+ * Custom scrollbar for the dropdown (WebKit browsers)
+ */
+.gene-search-dropdown::-webkit-scrollbar {
+  width: 8px;
+}
+
+.gene-search-dropdown::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+.gene-search-dropdown::-webkit-scrollbar-thumb {
+  background: #ccc;
+  border-radius: 4px;
+}
+
+.gene-search-dropdown::-webkit-scrollbar-thumb:hover {
+  background: #aaa;
+}
+
+/* ============================================================================
+   RESPONSIVE ADJUSTMENTS
+   ============================================================================ */
+
+/**
+ * Tablet and smaller screens
+ */
+@media (max-width: 768px) {
+  .gene-search-container {
+    max-width: 100%;
+  }
+  
+  .gene-search-input {
+    font-size: 14px;
+    padding: 10px 40px 10px 12px;
+  }
+  
+  .gene-result-name {
+    font-size: 14px;
+  }
+  
+  .gene-result-id {
+    font-size: 11px;
+  }
+  
+  .gene-result-stats {
+    font-size: 12px;
+    gap: 15px;
+  }
+}
+
+/**
+ * Mobile phones
+ */
+@media (max-width: 480px) {
+  .gene-search-dropdown {
+    max-height: 300px;
+  }
+  
+  .gene-result-stats {
+    flex-direction: column;
+    gap: 5px;
+  }
+  
+  .gene-search-input {
+    font-size: 16px; /* Prevent zoom on iOS */
+  }
+}
+
+/* ============================================================================
+   ACCESSIBILITY
+   ============================================================================ */
+
+/**
+ * Focus visible state for keyboard navigation
+ */
+.gene-search-input:focus-visible {
+  outline: 3px solid #4a90e2;
+  outline-offset: 2px;
+}
+
+/**
+ * Reduced motion for users who prefer it
+ */
+@media (prefers-reduced-motion: reduce) {
+  .gene-search-dropdown {
+    animation: none;
+  }
+  
+  .gene-search-loading {
+    animation: none;
+  }
+  
+  .gene-search-input,
+  .gene-search-result-item,
+  .gene-search-clear {
+    transition: none;
+  }
+}
+
