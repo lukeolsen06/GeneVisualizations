@@ -253,31 +253,21 @@
    ============================================================================ */
 
 /**
- * Main row: gene name and ID
+ * Main row: gene name
  */
 .gene-result-main {
   display: flex;
-  justify-content: space-between;
   align-items: baseline;
   margin-bottom: 6px;
 }
 
 /**
- * Gene name (left side, bold, larger)
+ * Gene name (bold, larger)
  */
 .gene-result-name {
   font-size: 16px;
   font-weight: 600;
   color: #333;
-}
-
-/**
- * Gene ID (right side, smaller, gray)
- */
-.gene-result-id {
-  font-size: 12px;
-  color: #999;
-  font-family: monospace;
 }
 
 /**
@@ -365,10 +355,6 @@
   
   .gene-result-name {
     font-size: 14px;
-  }
-  
-  .gene-result-id {
-    font-size: 11px;
   }
   
   .gene-result-stats {

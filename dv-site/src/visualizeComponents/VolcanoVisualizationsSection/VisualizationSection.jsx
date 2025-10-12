@@ -9,6 +9,7 @@ import DotPlot from "../../barCharts/testNetwork/DotPlot";
 import Toggle from "../ToggleGraphComponent";
 import Scatter from "./ScatterPlot";
 import StringAnalysisSection from "../../stringComponents/StringAnalysisSection";
+import GeneSearchBar from "../GeneSearchBar";
 
 import {
   chartDataMapping,
@@ -119,6 +120,23 @@ export default function DEGListDatasets() {
                 </span>
               </span>
             </div>
+
+            {/* Gene Search Bar - only show when a dataset is selected */}
+            {selectedDropdown !== "-- choose --" && (
+              <div style={{ margin: "20px 0" }}>
+                <GeneSearchBar 
+                  comparison={selectedDropdown}
+                  onGeneSelect={(gene) => {
+                    console.log('Selected gene:', gene);
+                    // TODO: Highlight gene on volcano plot
+                    // TODO: Show gene details in a panel
+                  }}
+                  placeholder="Search for a gene (e.g., Prl, Brca1)..."
+                  maxResults={10}
+                />
+              </div>
+            )}
+
             {selectedChartData && (
               <>
                 <Scatter currentDropdown={selectedDropdown} />

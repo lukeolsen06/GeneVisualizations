@@ -360,10 +360,9 @@ const GeneSearchBar = ({
                 onClick={() => handleGeneClick(gene)}
                 onMouseEnter={() => setSelectedIndex(index)}
               >
-                {/* Gene name and ID */}
+                {/* Gene name */}
                 <div className="gene-result-main">
                   <span className="gene-result-name">{gene.geneName}</span>
-                  <span className="gene-result-id">{gene.geneId}</span>
                 </div>
                 
                 {/* Statistics (log2FC and p-value) */}
