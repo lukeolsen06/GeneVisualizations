@@ -174,11 +174,12 @@ export class EnrichmentService {
     try {
       const results = await this.enrichmentRepository
         .createQueryBuilder('enrichment')
-        .select('DISTINCT enrichment.database', 'database')
+        .select('enrichment.database')
+        .distinct(true)
         .orderBy('enrichment.database', 'ASC')
         .getRawMany();
 
-      const databases = results.map((row) => row.database);
+      const databases = results.map((row) => row.enrichment_database);
 
       return { databases };
     } catch (error) {

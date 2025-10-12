@@ -1,6 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { TypeOrmOptionsFactory, TypeOrmModuleOptions } from '@nestjs/typeorm';
+import { RnaSeqEntity } from '../modules/datasets/entities/rna-seq.entity';
+import { EnrichmentEntity } from '../modules/enrichment/entities/enrichment.entity';
 
 /**
  * Database Configuration Service
@@ -24,8 +26,9 @@ export class DatabaseConfig implements TypeOrmOptionsFactory {
       password: this.configService.getOrThrow<string>('DB_PASSWORD'),
       database: this.configService.get<string>('DB_NAME'),
       
-      // Auto-load entities from the entities directory
-      entities: [__dirname + '/../modules/datasets/entities/*.entity{.ts,.js}'],
+      // Register entities explicitly
+      // This ensures TypeORM can find and load entity metadata correctly
+      entities: [RnaSeqEntity, EnrichmentEntity],
       
       // Development settings
       synchronize: this.configService.get<boolean>('DB_SYNCHRONIZE', false), // Don't auto-sync in production

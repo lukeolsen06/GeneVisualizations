@@ -5,6 +5,7 @@ import { CacheModule } from '@nestjs/cache-manager';
 
 // Import feature modules (we'll create these next)
 import { DatasetsModule } from './modules/datasets/datasets.module';
+import { EnrichmentModule } from './modules/enrichment/enrichment.module';
 import { AnalysisModule } from './modules/analysis/analysis.module';
 import { UsersModule } from './modules/users/users.module';
 import { SessionsModule } from './modules/sessions/sessions.module';
@@ -37,6 +38,8 @@ import appConfig from './config/app.config';
     // Database module - TypeORM configuration
     TypeOrmModule.forRootAsync({
       useClass: DatabaseConfig,
+      // Note: Individual entities are also registered in their respective modules
+      // via TypeOrmModule.forFeature([Entity])
     }),
 
     // Cache module - Redis configuration for caching (temporarily disabled for testing)
@@ -47,6 +50,7 @@ import appConfig from './config/app.config';
 
     // Feature modules (we'll create these step by step)
     DatasetsModule,
+    EnrichmentModule,
     AnalysisModule,
     UsersModule,
     SessionsModule,
