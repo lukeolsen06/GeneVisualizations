@@ -250,6 +250,11 @@ const GeneSearchBar = ({
         e.preventDefault();
         setShowDropdown(false);
         setSelectedIndex(-1);
+        
+        // Also clear the highlighted gene when user presses Escape
+        if (onGeneSelect) {
+          onGeneSelect(null);
+        }
         break;
 
       default:
@@ -259,6 +264,7 @@ const GeneSearchBar = ({
 
   /**
    * Clear search input (X button)
+   * Also clears the highlighted gene from the plot
    */
   const handleClear = () => {
     setSearchQuery('');
@@ -266,6 +272,11 @@ const GeneSearchBar = ({
     setShowDropdown(false);
     setSelectedIndex(-1);
     setError(null);
+    
+    // Clear the highlighted gene from the plot
+    if (onGeneSelect) {
+      onGeneSelect(null);
+    }
   };
 
   // ============================================================================

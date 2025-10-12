@@ -32,6 +32,9 @@ export default function DEGListDatasets() {
   const [disableInput, setDisableInput] = useState(false);
   const [log2FoldThreshold, setLog2FoldThreshold] = useState("0");
   const [tempLog2Fold, setTempLog2Fold] = useState("1");
+  
+  // State for selected gene from search (for highlighting on plot)
+  const [selectedGene, setSelectedGene] = useState(null);
 
   const handleDataFromChild = (data) => {
     if (data !== "KEGG" && data !== "Reactome" && data !== "STRING") {
@@ -67,6 +70,17 @@ export default function DEGListDatasets() {
     const value = e.target.value;
     setSelectedDropdown(value);
     setMainCategory(value);
+    // Clear selected gene when changing datasets
+    setSelectedGene(null);
+  };
+  
+  /**
+   * Handle gene selection from search bar
+   * Stores the gene for highlighting on the volcano plot
+   */
+  const handleGeneSelect = (gene) => {
+    console.log('Selected gene:', gene);
+    setSelectedGene(gene);
   };
 
   useEffect(() => {
@@ -126,11 +140,7 @@ export default function DEGListDatasets() {
               <div style={{ margin: "20px 0" }}>
                 <GeneSearchBar 
                   comparison={selectedDropdown}
-                  onGeneSelect={(gene) => {
-                    console.log('Selected gene:', gene);
-                    // TODO: Highlight gene on volcano plot
-                    // TODO: Show gene details in a panel
-                  }}
+                  onGeneSelect={handleGeneSelect}
                   placeholder="Search for a gene (e.g., Prl, Brca1)..."
                   maxResults={10}
                 />
@@ -139,7 +149,10 @@ export default function DEGListDatasets() {
 
             {selectedChartData && (
               <>
-                <Scatter currentDropdown={selectedDropdown} />
+                <Scatter 
+                  currentDropdown={selectedDropdown}
+                  highlightedGene={selectedGene}
+                />
               </>
             )}
           </div>

@@ -9,6 +9,7 @@ const VolcanoPlot = ({
   foldChange,
   handlePlotlyClick,
   statMethod,
+  highlightedGene,
 }) => {
   const plotContainerRef = useRef(null);
   const [showTextTraces, setShowTextTraces] = useState(false);
@@ -210,6 +211,48 @@ const VolcanoPlot = ({
             }))
         : [];
 
+      // Highlighted gene trace (from search bar selection)
+      // Creates a two-layer effect: background glow + foreground marker
+      const highlightedGeneTrace = highlightedGene
+        ? (() => {
+            const geneData = processedData.find(
+              (d) => d.geneName && d.geneName.toLowerCase() === highlightedGene.geneName.toLowerCase()
+            );
+            
+            if (!geneData) return [];
+            
+            return [
+              // Layer 2: Foreground star with label
+              {
+                x: [geneData.log2FoldChange],
+                y: [geneData["-log10(pvalue)"]],
+                mode: "markers+text",
+                marker: {
+                  color: "green",
+                  opacity: 1,
+                  size: 5,
+                  line: {
+                    color: "green",
+                    width: 3,
+                  },
+                  symbol: "hexagon",
+                },
+                type: "scattergl",
+                text: [geneData.geneName],
+                textposition: "top center",
+                textfont: {
+                  size: 14,
+                  color: "black",
+                  family: "Arial Black, sans-serif",
+                },
+                hovertemplate: `<b>${geneData.geneName}</b><br>Log2FC: ${geneData.log2FoldChange?.toFixed(3)}<br>p-value: ${geneData.pvalue?.toExponential(2)}<br>padj: ${geneData.padj?.toExponential(2)}<extra></extra>`,
+                showlegend: true,
+                name: `Selected: ${geneData.geneName}`,
+              },
+            ];
+          })()
+        : [];
+
       const layout = {
         shapes: [
           {
@@ -287,7 +330,7 @@ const VolcanoPlot = ({
       Plotly.purge(plotContainerRef.current);
       Plotly.newPlot(
         plotContainerRef.current,
-        [...staticTraces, ...dynamicTraces, ...searchTrace],
+        [...staticTraces, ...dynamicTraces, ...searchTrace, ...highlightedGeneTrace],
         layout,
         config
       );
@@ -320,6 +363,7 @@ const VolcanoPlot = ({
     statMethod,
     searchQuery,
     nonSignificantSampleSize,
+    highlightedGene,
   ]);
 
   const validateAndSetThreshold = (value) => {

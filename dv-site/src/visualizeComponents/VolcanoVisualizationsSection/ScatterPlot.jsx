@@ -7,7 +7,7 @@ import DatasetService from "../../services/DatasetService";
 
 import { chartDataMapping, plotDataMapping } from "./imports";
 
-export default function DEGListDatasets({ currentDropdown }) {
+export default function DEGListDatasets({ currentDropdown, highlightedGene }) {
   const [selectedDropdown, setSelectedDropdown] = useState("-- choose --");
   const [dataFromChild, setDataFromChild] = useState("All Genes");
   const [selectedChartData, setSelectedChartData] = useState(null);
@@ -150,6 +150,7 @@ export default function DEGListDatasets({ currentDropdown }) {
                       threshold={pValueThreshold}
                       foldChange={log2FoldThreshold}
                       method={method}
+                      highlightedGene={highlightedGene}
                     />
                   </>
                 ) : (
