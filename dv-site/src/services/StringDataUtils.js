@@ -35,7 +35,7 @@ export function getConfidenceLevel(score) {
 
 /**
  * Convert network data to Cytoscape format
- * @param {Array} networkData - Network data from STRING API
+ * @param {Array} networkData - Network data from STRING API or backend
  * @param {Array} enrichedGenes - Enriched gene objects with all data
  * @returns {Object} Cytoscape-compatible data
  */
@@ -43,27 +43,46 @@ export function convertToCytoscapeFormat(networkData, enrichedGenes = []) {
   const nodes = new Map();
   const edges = [];
 
-  // Create enriched genes lookup by STRING ID
+  // Create enriched genes lookup by STRING ID and gene name
   const geneLookup = new Map();
   enrichedGenes.forEach(gene => {
     if (gene.stringId) {
       geneLookup.set(gene.stringId, gene);
     }
+    if (gene.geneName) {
+      geneLookup.set(gene.geneName, gene);
+    }
   });
 
   // Process network data to extract nodes and edges
   networkData.forEach(interaction => {
-    const sourceId = interaction['preferredName_A'] || interaction['stringId_A']; // if there is a preferred name, use it, otherwise use the string id
-    const targetId = interaction['preferredName_B'] || interaction['stringId_B'];
-    const score = parseFloat(interaction['score']) || 0;
+    // Handle both old STRING API format and new backend format
+    let sourceId, targetId, score;
+    
+    if (interaction.sourceGeneName && interaction.targetGeneName) {
+      // New backend format
+      sourceId = interaction.sourceGeneName;
+      targetId = interaction.targetGeneName;
+      score = parseFloat(interaction.interactionScore) || 0;
+    } else {
+      // Old STRING API format
+      sourceId = interaction['preferredName_A'] || interaction['stringId_A'];
+      targetId = interaction['preferredName_B'] || interaction['stringId_B'];
+      score = parseFloat(interaction['score']) || 0;
+    }
 
     // Add source node
     if (!nodes.has(sourceId)) {
-      const enrichedGene = geneLookup.get(interaction['stringId_A']);
+      // Try to find enriched gene data by gene name or STRING ID
+      let enrichedGene = geneLookup.get(sourceId);
+      if (!enrichedGene) {
+        enrichedGene = geneLookup.get(interaction.sourceStringId || interaction['stringId_A']);
+      }
+      
       const nodeData = {
         data: {
           id: sourceId,
-          stringId: interaction['stringId_A'],
+          stringId: interaction.sourceStringId || interaction['stringId_A'],
           ...(enrichedGene && {
             log2fc: enrichedGene.log2fc,
             padj: enrichedGene.padj,
@@ -74,17 +93,21 @@ export function convertToCytoscapeFormat(networkData, enrichedGenes = []) {
         }
       };
       
-      
       nodes.set(sourceId, nodeData);
     }
 
     // Add target node
     if (!nodes.has(targetId)) {
-      const enrichedGene = geneLookup.get(interaction['stringId_B']);
+      // Try to find enriched gene data by gene name or STRING ID
+      let enrichedGene = geneLookup.get(targetId);
+      if (!enrichedGene) {
+        enrichedGene = geneLookup.get(interaction.targetStringId || interaction['stringId_B']);
+      }
+      
       nodes.set(targetId, {
         data: {
           id: targetId,
-          stringId: interaction['stringId_B'],
+          stringId: interaction.targetStringId || interaction['stringId_B'],
           ...(enrichedGene && {
             log2fc: enrichedGene.log2fc,
             padj: enrichedGene.padj,

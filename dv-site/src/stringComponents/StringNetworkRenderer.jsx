@@ -1,7 +1,7 @@
 import React, { useRef, useEffect, useState } from 'react';
 import cytoscape from 'cytoscape';
 import fcose from 'cytoscape-fcose';
-import StringApiService from '../services/StringApiService';
+import StringBackendService from '../services/StringBackendService';
 import { convertToCytoscapeFormat, calculateNormalizedDegreeCentrality } from '../services/StringDataUtils';
 import NetworkInfoPanel from './NetworkInfoPanel';
 import './StringNetworkRenderer.css';
@@ -97,11 +97,18 @@ const StringNetworkRenderer = ({
 
       console.log(`Fetching network for ${stringIds.length} genes from ${selectedComparison}`);
 
-      // Step 2: Call STRING API to get network data
-      const networkData = await StringApiService.getNetwork(stringIds, {
-        confidenceThreshold: 400, // Medium confidence
-        networkType: 'full'       // Full network including physical and functional interactions
-      });
+      // Step 2: Create network using backend service (handles caching automatically)
+      const geneNames = geneObjects
+        .filter(gene => gene.stringId) // Only genes with valid STRING IDs
+        .map(gene => gene.geneName);
+      
+      const networkResponse = await StringBackendService.createNetwork(
+        selectedComparison,
+        geneNames,
+        { confidenceThreshold: 400, networkType: 'full' }
+      );
+      
+      const networkData = networkResponse.edges || [];
 
       if (!networkData || networkData.length === 0) {
         throw new Error('No network data found for the selected gene set');

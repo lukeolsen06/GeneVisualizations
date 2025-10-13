@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import GeneSetSelector from './GeneSetSelector';
 import StringNetworkRenderer from './StringNetworkRenderer';
 import ThresholdInputControls from './ThresholdInputControls';
-import GeneEnrichmentService from '../services/GeneEnrichmentService';
+import EnhancedGeneEnrichmentService from '../services/EnhancedGeneEnrichmentService';
 import './StringAnalysisSection.css';
 
 /**
@@ -56,7 +56,7 @@ const StringAnalysisSection = () => {
     setError(null);
   };
 
-  // Enrich genes with STRING API data using the service
+  // Enrich genes with STRING API data using the enhanced service
   const enrichGenesWithStringData = useCallback(async (geneObjects) => {
     if (geneObjects.length === 0) return [];
 
@@ -64,19 +64,24 @@ const StringAnalysisSection = () => {
     setError(null);
 
     try {
-      const enrichedGenes = await GeneEnrichmentService.enrichGenesWithStringData(geneObjects);
+      // Use the enhanced service which includes network creation
+      const enrichmentResult = await EnhancedGeneEnrichmentService.enrichGenesWithStringData(
+        geneObjects,
+        selectedComparison,
+        { confidenceThreshold: 400, networkType: 'full' }
+      );
       
-      // Get enrichment statistics
-      const enrichmentStats = GeneEnrichmentService.getEnrichmentStats(geneObjects, enrichedGenes);
-      
-      // Update analysis stats
+      // Update analysis stats with comprehensive data
       setAnalysisStats(prev => ({
         ...prev,
-        stringResolvedGenes: enrichmentStats.resolvedGenes,
+        stringResolvedGenes: enrichmentResult.stats.resolvedGenes,
+        networkNodes: enrichmentResult.stats.networkNodes,
+        networkEdges: enrichmentResult.stats.networkEdges,
         filteredGenes: geneObjects.length
       }));
 
-      return enrichedGenes;
+      // Return enriched genes (network data is handled separately)
+      return enrichmentResult.enrichedGenes;
 
     } catch (error) {
       console.error('Error enriching genes with STRING data:', error);
@@ -85,7 +90,7 @@ const StringAnalysisSection = () => {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [selectedComparison]);
 
   // Handle filtered genes from GeneSetSelector
   const handleFilteredGenes = async (geneObjects) => {
