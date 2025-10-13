@@ -401,10 +401,14 @@ export class StringService {
       }
       
       // Add edge
+      const sourceNode = nodeMap.get(sourceId);
+      const targetNode = nodeMap.get(targetId);
       const edge = this.edgeRepository.create({
         networkId: savedNetwork.id,
         sourceStringId: sourceId,
+        sourceGeneName: sourceNode.preferredName,
         targetStringId: targetId,
+        targetGeneName: targetNode.preferredName,
         interactionScore: parseFloat(interaction.score) || 0,
         confidenceLevel: this.getConfidenceLevel(parseFloat(interaction.score) || 0)
       });
@@ -521,7 +525,9 @@ export class StringService {
       dto.edges = network.edges.map(edge => ({
         id: edge.id,
         sourceStringId: edge.sourceStringId,
+        sourceGeneName: edge.sourceGeneName,
         targetStringId: edge.targetStringId,
+        targetGeneName: edge.targetGeneName,
         interactionScore: edge.interactionScore,
         confidenceLevel: edge.confidenceLevel,
         interactionType: edge.interactionType,

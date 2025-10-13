@@ -8,6 +8,7 @@ import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn, Index } 
  */
 @Entity('string_edges')
 @Index(['networkId', 'sourceStringId', 'targetStringId'], { unique: true }) // Ensure unique edges per network
+@Index(['networkId', 'sourceGeneName', 'targetGeneName']) // Index for gene name queries
 export class StringEdgeEntity {
   @PrimaryGeneratedColumn()
   id!: number;
@@ -25,10 +26,22 @@ export class StringEdgeEntity {
   sourceStringId!: string;
 
   /**
+   * Gene name of the source protein (user-friendly)
+   */
+  @Column({ type: 'varchar', length: 255, nullable: false })
+  sourceGeneName!: string;
+
+  /**
    * STRING ID of the target protein
    */
   @Column({ type: 'varchar', length: 255, nullable: false })
   targetStringId!: string;
+
+  /**
+   * Gene name of the target protein (user-friendly)
+   */
+  @Column({ type: 'varchar', length: 255, nullable: false })
+  targetGeneName!: string;
 
   /**
    * Interaction confidence score (0-1000 scale from STRING API)

@@ -182,10 +182,22 @@ export class NetworkEdgeDto {
   sourceStringId!: string;
 
   @ApiProperty({
+    description: 'Gene name of source protein (user-friendly)',
+    example: 'Gnai3'
+  })
+  sourceGeneName!: string;
+
+  @ApiProperty({
     description: 'STRING ID of target protein',
     example: '10090.ENSMUSP00000000002'
   })
   targetStringId!: string;
+
+  @ApiProperty({
+    description: 'Gene name of target protein (user-friendly)',
+    example: 'Cdc45'
+  })
+  targetGeneName!: string;
 
   @ApiProperty({
     description: 'Interaction confidence score (0-1000 scale)',
