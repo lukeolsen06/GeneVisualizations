@@ -9,6 +9,7 @@ import { EnrichmentModule } from './modules/enrichment/enrichment.module';
 import { AnalysisModule } from './modules/analysis/analysis.module';
 import { UsersModule } from './modules/users/users.module';
 import { SessionsModule } from './modules/sessions/sessions.module';
+import { StringModule } from './modules/string/string.module';
 
 // Import configuration
 import { DatabaseConfig } from './config/database.config';
@@ -54,6 +55,7 @@ import appConfig from './config/app.config';
     AnalysisModule,
     UsersModule,
     SessionsModule,
+    StringModule,
   ],
 })
 export class AppModule {}

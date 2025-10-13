@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { TypeOrmOptionsFactory, TypeOrmModuleOptions } from '@nestjs/typeorm';
 import { RnaSeqEntity } from '../modules/datasets/entities/rna-seq.entity';
 import { EnrichmentEntity } from '../modules/enrichment/entities/enrichment.entity';
+import { StringNetworkEntity, StringNodeEntity, StringEdgeEntity } from '../modules/string/entities';
 
 /**
  * Database Configuration Service
@@ -28,7 +29,13 @@ export class DatabaseConfig implements TypeOrmOptionsFactory {
       
       // Register entities explicitly
       // This ensures TypeORM can find and load entity metadata correctly
-      entities: [RnaSeqEntity, EnrichmentEntity],
+      entities: [
+        RnaSeqEntity, 
+        EnrichmentEntity,
+        StringNetworkEntity,
+        StringNodeEntity,
+        StringEdgeEntity
+      ],
       
       // Development settings
       synchronize: this.configService.get<boolean>('DB_SYNCHRONIZE', false), // Don't auto-sync in production
