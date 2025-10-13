@@ -129,7 +129,7 @@ const PlotlyBarChart = ({ chart, handleChartClick }) => {
         plot_bgcolor: "white",
         xaxis: {
           title: {
-            text: "log2foldchange",
+            text: "Enrichment Score",
           },
           showgrid: true,
           gridwidth: 1,
@@ -141,7 +141,7 @@ const PlotlyBarChart = ({ chart, handleChartClick }) => {
         },
         yaxis: {
           title: {
-            text: "Enrichment Score",
+            text: "Pathways",
           },
           autorange: "reversed",
           showgrid: true,
