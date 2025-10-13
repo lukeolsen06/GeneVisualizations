@@ -21,6 +21,7 @@ const StringAnalysisSection = () => {
   const [selectedComparison, setSelectedComparison] = useState('-- choose --');
   const [filteredGenes, setFilteredGenes] = useState([]);
   const [enrichedGenes, setEnrichedGenes] = useState([]);
+  const [networkData, setNetworkData] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   
@@ -32,7 +33,6 @@ const StringAnalysisSection = () => {
   
   
   // State for network visualization
-  const [networkData, setNetworkData] = useState(null);
   const [selectedNode, setSelectedNode] = useState(null);
   const [selectedEdge, setSelectedEdge] = useState(null);
   
@@ -70,6 +70,9 @@ const StringAnalysisSection = () => {
         selectedComparison,
         { confidenceThreshold: 400, networkType: 'full' }
       );
+      
+      // Store network data for the renderer
+      setNetworkData(enrichmentResult.rawNetworkData);
       
       // Update analysis stats with comprehensive data
       setAnalysisStats(prev => ({
@@ -111,7 +114,7 @@ const StringAnalysisSection = () => {
 
   // Handle network data from StringNetworkRenderer
   const handleNetworkData = (network, stats) => {
-    setNetworkData(network);
+    // Don't overwrite networkData with Cytoscape instance - we already have raw data
     setAnalysisStats(prev => ({
       ...prev,
       ...stats
@@ -270,6 +273,7 @@ const StringAnalysisSection = () => {
       {enrichedGenes.length > 0 && (
         <StringNetworkRenderer
           geneObjects={enrichedGenes}
+          networkData={networkData}
           selectedComparison={selectedComparison}
           selectedNode={selectedNode}
           selectedEdge={selectedEdge}

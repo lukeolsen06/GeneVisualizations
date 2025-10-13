@@ -57,26 +57,35 @@ export class StringService {
     
     this.logger.log(`Creating network for comparison: ${comparison} with ${geneSet.length} genes`);
     
-    // Step 1: Generate cache key (hash of gene set + parameters)
-    const geneSetHash = this.generateGeneSetHash(geneSet, confidenceThreshold, networkType);
+    // Step 1: Resolve gene identifiers to STRING IDs first
+    const resolvedIdentifiers = await this.resolveIdentifiers({
+      identifiers: geneSet,
+      fromFormat: 'symbol'
+    });
     
-    // Step 2: Check if network already exists
-    const existingNetwork = await this.findNetworkByHash(comparison, geneSetHash);
-    if (existingNetwork) {
-      this.logger.log(`Found existing network with hash: ${geneSetHash}`);
-      return this.mapNetworkToResponseDto(existingNetwork, true); // includeData = true
-    }
+    const stringIds = resolvedIdentifiers.mappings
+      .filter(mapping => mapping.isResolved && mapping.stringId)
+      .map(mapping => mapping.stringId!);
     
+    // Step 2: Generate cache key based on RESOLVED genes from the current filtered gene set
+    const resolvedGeneNames = resolvedIdentifiers.mappings
+      .filter(mapping => mapping.isResolved)
+      .map(mapping => mapping.preferredName || mapping.inputId)
+      .sort();
+    
+    const geneSetHash = this.generateGeneSetHash(resolvedGeneNames, confidenceThreshold, networkType);
+
     try {
-      // Step 3: Resolve gene identifiers to STRING IDs
-      const resolvedIdentifiers = await this.resolveIdentifiers({
-        identifiers: geneSet,
-        fromFormat: 'symbol'
-      });
       
-      const stringIds = resolvedIdentifiers.mappings
-        .filter(mapping => mapping.isResolved && mapping.stringId)
-        .map(mapping => mapping.stringId!);
+      // Step 3: Check if network already exists (based on resolved genes)
+      const existingNetwork = await this.findNetworkByHash(comparison, geneSetHash);
+      if (existingNetwork) {
+        this.logger.log(`Found existing network with hash: ${geneSetHash} for ${resolvedGeneNames.length} resolved genes`);
+        return this.mapNetworkToResponseDto(existingNetwork, true); // includeData = true
+      }
+      
+      // Step 4: Log the filtering context for debugging
+      this.logger.log(`Creating new network: ${geneSet.length} input genes → ${resolvedGeneNames.length} resolved genes`);
       
       if (stringIds.length < 2) {
         throw new BadRequestException(
@@ -295,6 +304,18 @@ export class StringService {
 
   /**
    * Generate a hash for gene set caching
+   * This creates a unique identifier based on:
+   * - Resolved gene names from the current filtered gene set (sorted for consistency)
+   * - Confidence threshold
+   * - Network type
+   * 
+   * Caching Strategy:
+   * - When user changes log2fc/padj thresholds, they get different filtered genes
+   * - Different filtered genes → different resolved genes → different hash → new network
+   * - Same filtered genes (regardless of how they were filtered) → same resolved genes → same hash → cached network
+   * 
+   * Note: Expression data (log2fc, padj) is not included in the hash
+   * because it doesn't affect network structure, only visualization styling.
    */
   private generateGeneSetHash(geneSet: string[], confidenceThreshold: number, networkType: string): string {
     const sortedGenes = [...geneSet].sort();
@@ -307,7 +328,8 @@ export class StringService {
    */
   private async findNetworkByHash(comparison: string, geneSetHash: string): Promise<StringNetworkEntity | null> {
     return this.networkRepository.findOne({
-      where: { comparison, geneSetHash }
+      where: { comparison, geneSetHash },
+      relations: ['nodes', 'edges'] // Load the relations for cached networks
     });
   }
 

@@ -40,6 +40,7 @@ export function getConfidenceLevel(score) {
  * @returns {Object} Cytoscape-compatible data
  */
 export function convertToCytoscapeFormat(networkData, enrichedGenes = []) {
+
   const nodes = new Map();
   const edges = [];
 

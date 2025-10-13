@@ -22,6 +22,7 @@ cytoscape.use(fcose);
  */
 const StringNetworkRenderer = ({
   geneObjects,           // Enriched gene objects from parent
+  networkData,           // Network data from EnhancedGeneEnrichmentService
   selectedComparison,    // Current comparison name
   selectedNode,          // Currently selected node data
   selectedEdge,          // Currently selected edge data
@@ -41,16 +42,27 @@ const StringNetworkRenderer = ({
     edges: 0
   });
   const [centralityData, setCentralityData] = useState(null);
+  const [lastNetworkDataHash, setLastNetworkDataHash] = useState(null);
 
-  // Main effect: Fetch network data and render when geneObjects change
+  // Main effect: Render network data when geneObjects or networkData change
   useEffect(() => {
-    if (geneObjects.length > 0) {
-      fetchAndRenderNetwork();
+    if (geneObjects.length > 0 && networkData) {
+      // Create a simple hash of the network data to avoid unnecessary re-renders
+      const networkDataHash = `${networkData.id}-${networkData.edges?.length}-${geneObjects.length}`;
+      
+      if (networkDataHash !== lastNetworkDataHash) {
+        console.log('Network data changed, re-rendering...');
+        setLastNetworkDataHash(networkDataHash);
+        fetchAndRenderNetwork();
+      } else {
+        console.log('Network data unchanged, skipping re-render');
+      }
     } else {
       // Clear existing network
       clearNetwork();
+      setLastNetworkDataHash(null);
     }
-  }, [geneObjects, selectedComparison]);
+  }, [geneObjects, networkData, selectedComparison, lastNetworkDataHash]);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -73,7 +85,7 @@ const StringNetworkRenderer = ({
   };
 
   /**
-   * Fetch network data from STRING API and render
+   * Render network data that was already created by EnhancedGeneEnrichmentService
    */
   const fetchAndRenderNetwork = async () => {
     setIsLoading(true);
@@ -81,53 +93,33 @@ const StringNetworkRenderer = ({
     setError(null);
 
     try {
-      // Step 1: Extract STRING IDs from enriched genes
-      const stringIds = geneObjects
-        .filter(gene => gene.stringId) // Only genes with valid STRING IDs
-        .map(gene => gene.stringId);
-
-
-      if (stringIds.length === 0) {
-        throw new Error('No valid STRING IDs found in gene set. The genes may not be present in the STRING database.');
-      }
-
-      if (stringIds.length < 2) {
-        throw new Error(`Only ${stringIds.length} gene(s) found in STRING database. At least 2 genes are needed to build a network.`);
-      }
-
-      console.log(`Fetching network for ${stringIds.length} genes from ${selectedComparison}`);
-
-      // Step 2: Create network using backend service (handles caching automatically)
-      const geneNames = geneObjects
-        .filter(gene => gene.stringId) // Only genes with valid STRING IDs
-        .map(gene => gene.geneName);
+      // Debug: Check what we received
+      console.log('StringNetworkRenderer received networkData:', {
+        networkData,
+        hasNetworkData: !!networkData,
+        hasEdges: !!networkData?.edges,
+        edgesLength: networkData?.edges?.length || 0
+      });
       
-      const networkResponse = await StringBackendService.createNetwork(
-        selectedComparison,
-        geneNames,
-        { confidenceThreshold: 400, networkType: 'full' }
-      );
-      
-      const networkData = networkResponse.edges || [];
-
-      if (!networkData || networkData.length === 0) {
-        throw new Error('No network data found for the selected gene set');
+      // Check if we have network data from EnhancedGeneEnrichmentService
+      if (!networkData || !networkData.edges || networkData.edges.length === 0) {
+        throw new Error('No network data available. The network may not have any interactions at the current confidence threshold.');
       }
 
-      console.log(`Retrieved ${networkData.length} interactions`);
+      console.log(`Rendering network with ${networkData.edges.length} interactions`);
 
-      // Step 3: Convert to Cytoscape format
-      const cytoscapeData = convertToCytoscapeFormat(networkData, geneObjects);
+      // Convert to Cytoscape format - pass the edges array, not the whole network object
+      const cytoscapeData = convertToCytoscapeFormat(networkData.edges, geneObjects);
 
-      // Step 4: Initialize or update Cytoscape instance
+      // Initialize or update Cytoscape instance
       await initializeCytoscape(cytoscapeData);
 
-      // Step 5: Update local stats and notify parent
+      // Update local stats and notify parent
       const stats = {
         networkNodes: cytoscapeData.nodes.length,
         networkEdges: cytoscapeData.edges.length,
         totalGenes: geneObjects.length,
-        stringResolvedGenes: stringIds.length
+        stringResolvedGenes: geneObjects.filter(gene => gene.stringId).length
       };
 
       setNetworkStats({
@@ -138,8 +130,8 @@ const StringNetworkRenderer = ({
       onNetworkData(cyRef.current, stats);
 
     } catch (error) {
-      console.error('Error fetching network data:', error);
-      const errorMessage = `Failed to load network: ${error.message}`;
+      console.error('Error rendering network data:', error);
+      const errorMessage = `Failed to render network: ${error.message}`;
       setError(errorMessage);
       onError(errorMessage);
       

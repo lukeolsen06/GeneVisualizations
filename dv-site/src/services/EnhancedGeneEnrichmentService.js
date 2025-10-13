@@ -12,6 +12,24 @@ import { convertToCytoscapeFormat } from './StringDataUtils.js';
  * - Network data included in enrichment results
  */
 class EnhancedGeneEnrichmentService {
+  constructor() {
+    // Simple in-memory cache for enrichment results
+    this.cache = new Map();
+    // Cache for identifier resolution results (separate from enrichment cache)
+    this.identifierCache = new Map();
+  }
+
+  // Generate cache key for enrichment results
+  generateCacheKey(geneObjects, comparison, options) {
+    const geneNames = geneObjects.map(g => g.geneName).sort();
+    return `${comparison}:${geneNames.join(',')}:${options.confidenceThreshold || 400}:${options.networkType || 'full'}`;
+  }
+
+  // Generate cache key for identifier resolution
+  generateIdentifierCacheKey(geneNames) {
+    return geneNames.sort().join(',');
+  }
+
   /**
    * Enrich gene objects with STRING data using backend APIs
    * @param {Array} geneObjects - Array of gene objects from GeneSetSelector
@@ -20,6 +38,13 @@ class EnhancedGeneEnrichmentService {
    * @returns {Promise<Object>} Enrichment results with network data
    */
   async enrichGenesWithStringData(geneObjects, comparison, options = {}) {
+    // Check cache first
+    const cacheKey = this.generateCacheKey(geneObjects, comparison, options);
+    if (this.cache.has(cacheKey)) {
+      console.log(`Using cached enrichment result for ${comparison}`);
+      return this.cache.get(cacheKey);
+    }
+
     if (geneObjects.length === 0) {
       return {
         enrichedGenes: [],
@@ -40,7 +65,22 @@ class EnhancedGeneEnrichmentService {
       
       // Step 1: Resolve gene identifiers to get STRING IDs and basic info
       const geneNames = geneObjects.map(gene => gene.geneName);
-      const resolutionResult = await StringBackendService.resolveIdentifiers(geneNames, 'symbol');
+      
+      // Check identifier cache first
+      const identifierCacheKey = this.generateIdentifierCacheKey(geneNames);
+      let resolutionResult;
+      
+      if (this.identifierCache.has(identifierCacheKey)) {
+        console.log(`Using cached identifier resolution for ${geneNames.length} genes`);
+        resolutionResult = this.identifierCache.get(identifierCacheKey);
+      } else {
+        console.log(`Resolving ${geneNames.length} identifiers (STRING API call)...`);
+        resolutionResult = await StringBackendService.resolveIdentifiers(geneNames, 'symbol');
+        
+        // Cache the identifier resolution result
+        this.identifierCache.set(identifierCacheKey, resolutionResult);
+        console.log(`Cached identifier resolution for ${geneNames.length} genes`);
+      }
       
       console.log(`Resolved ${resolutionResult.resolvedCount}/${resolutionResult.totalProcessed} genes (${(resolutionResult.successRate * 100).toFixed(1)}%)`);
       
@@ -52,7 +92,7 @@ class EnhancedGeneEnrichmentService {
       
       // Step 4: Convert network data to Cytoscape format if available
       let cytoscapeData = null;
-      if (networkResult.networkData && networkResult.networkData.edges && networkResult.networkData.nodes) {
+      if (networkResult.networkData && networkResult.networkData.edges && networkResult.networkData.edges.length > 0) {
         cytoscapeData = convertToCytoscapeFormat(
           networkResult.networkData.edges, 
           enrichedGenes
@@ -72,12 +112,18 @@ class EnhancedGeneEnrichmentService {
       
       console.log('Enrichment completed:', stats);
       
-      return {
+      const result = {
         enrichedGenes,
         networkData: cytoscapeData,
         rawNetworkData: networkResult.networkData,
         stats
       };
+
+      // Cache the result for future use
+      this.cache.set(cacheKey, result);
+      console.log(`Cached enrichment result for ${comparison}`);
+      
+      return result;
 
     } catch (error) {
       console.error('Error enriching genes with STRING data:', error);
