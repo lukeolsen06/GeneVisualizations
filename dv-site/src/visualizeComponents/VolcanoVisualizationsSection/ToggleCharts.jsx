@@ -1,12 +1,12 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import "./DEGListDatasets.css";
 import Dropdown from "../DropDown";
 import PlotlyBarChart from "../../barCharts/PlotlyJSGraph";
 // import { AnimatePresence } from "framer-motion";
 import RegulationInfo from "./RegulationInfo";
 import Plot from "./RegulationPlot";
+import EnrichmentService from "../../services/EnrichmentService";
 import {
-  chartDataMapping,
   dropdownOptions,
   DEGdropdownLength,
   termsLength,
@@ -21,30 +21,63 @@ export default function ToggleCharts({ subCategory, currentPlot }) {
   const [barChartData, setBarChartData] = useState(null);
   const [showDropdowns, setShowDropdowns] = useState(true);
   const [dataLength, setDataLength] = useState(0); // State to hold the length of data
+  
+  // New states for API integration
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  // Function to load enrichment data from API
+  const loadEnrichmentData = useCallback(async (comparison, database) => {
+    if (!comparison || !database || comparison === "-- choose --") {
+      setSelectedChartData(null);
+      setDataLength(0);
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const data = await EnrichmentService.getEnrichmentData(comparison, database, {
+        fdr_threshold: 0.05,
+        limit: 50
+      });
+      
+      // Filter out any items with undefined enrichment scores
+      const validData = data ? data.filter(item => 
+        item && 
+        typeof item.enrichmentScore === 'number' && 
+        !isNaN(item.enrichmentScore)
+      ) : [];
+      
+      console.log(`Loaded ${validData.length} enrichment terms for ${comparison} - ${database}`);
+      setSelectedChartData(validData);
+      setDataLength(validData.length);
+    } catch (err) {
+      console.error("Failed to load enrichment data:", err);
+      setError(err.message || "Failed to load data from server");
+      setSelectedChartData(null);
+      setDataLength(0);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
     if (subCategory === "AllGenes") {
       setShowDropdowns(false);
       setMainCategory(currentPlot);
-      setSelectedChartData(
-        chartDataMapping[currentPlot]?.[subCategory] || null
-      );
+      setSelectedChartData(null); // No enrichment data for "All Genes"
+      setDataLength(0);
     } else {
       setShowDropdowns(true);
-      const mainCat =
-        selectedDropdown !== "-- choose --" ? selectedDropdown : currentPlot;
-      setSelectedChartData(chartDataMapping[mainCat]?.[subCategory] || null);
+      const mainCat = selectedDropdown !== "-- choose --" ? selectedDropdown : currentPlot;
       setMainCategory(mainCat);
+      
+      // Load data from API instead of static imports
+      loadEnrichmentData(mainCat, subCategory);
     }
-
-    const getDataLength = (selectedChartData) => {
-      if (selectedChartData != null) {
-        const length = selectedChartData.length;
-        setDataLength(length); // Update the state with the length of the data
-      }
-    };
-    getDataLength(selectedChartData); // Call the function
-  }, [selectedDropdown, subCategory, currentPlot, selectedChartData]); // Include selectedChartData in dependency array
+  }, [selectedDropdown, subCategory, currentPlot, loadEnrichmentData]);
 
   const handleMainCategoryChange = (e) => {
     setSelectedDropdown(e.target.value);
@@ -165,7 +198,19 @@ export default function ToggleCharts({ subCategory, currentPlot }) {
             justifyContent: "center",
           }}
         >
-          {selectedChartData && (
+          {loading && (
+            <div style={{ padding: "20px", textAlign: "center" }}>
+              <div>Loading enrichment data from server...</div>
+            </div>
+          )}
+          
+          {error && (
+            <div style={{ padding: "20px", textAlign: "center", color: "red" }}>
+              <div>Error: {error}</div>
+            </div>
+          )}
+          
+          {!loading && !error && selectedChartData && selectedChartData.length > 0 && (
             <>
               <PlotlyBarChart
                 chart={selectedChartData}
@@ -175,6 +220,12 @@ export default function ToggleCharts({ subCategory, currentPlot }) {
                 handleChartClick={handleChartClick}
               />
             </>
+          )}
+          
+          {!loading && !error && !selectedChartData && selectedDropdown !== "-- choose --" && subCategory !== "AllGenes" && (
+            <div style={{ padding: "20px", textAlign: "center" }}>
+              <div>No enrichment data found for {mainCategory} - {subCategory}</div>
+            </div>
           )}
         </div>
         {showGeneInfo && (

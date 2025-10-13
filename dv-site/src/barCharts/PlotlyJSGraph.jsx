@@ -10,32 +10,33 @@ const PlotlyBarChart = ({ chart, handleChartClick }) => {
   useEffect(() => {
     const normalizeData = (data) => {
       return data.map((item) => {
-        if (item["enrichment score"] !== undefined) {
+        // Handle both old JSON format (with spaces) and new API format (camelCase)
+        const enrichmentScore = item["enrichment score"] !== undefined ? item["enrichment score"] : item.enrichmentScore;
+        
+        if (enrichmentScore !== undefined) {
           return {
-            termId: item["#term ID"],
-            termDescription: item["term description"],
-            genesMapped: item["genes mapped"],
-            enrichmentScore: item["enrichment score"],
-            direction: item["direction"],
-            falseDiscoveryRate: item["false discovery rate"],
-            method: item["method"],
-            matchingProteinsIds: item["matching proteins in your input (IDs)"],
-            matchingProteinsLabels:
-              item["matching proteins in your input (labels)"],
+            termId: item["#term ID"] || item.termId,
+            termDescription: item["term description"] || item.termDescription,
+            genesMapped: item["genes mapped"] || item.genesMapped,
+            enrichmentScore: enrichmentScore,
+            direction: item.direction,
+            falseDiscoveryRate: item["false discovery rate"] || item.falseDiscoveryRate,
+            method: item.method,
+            matchingProteinsIds: item["matching proteins in your input (IDs)"] || item.matchingProteinIds,
+            matchingProteinsLabels: item["matching proteins in your input (labels)"] || item.matchingProteinLabels,
           };
         } else {
+          // Fallback for items without enrichment score
           return {
-            termId: item["#term ID"],
-            termDescription: item["term description"],
-            genesMapped: item["observed gene count"],
-            enrichmentScore: item["strength"],
+            termId: item["#term ID"] || item.termId,
+            termDescription: item["term description"] || item.termDescription,
+            genesMapped: item["observed gene count"] || item.genesMapped,
+            enrichmentScore: item["strength"] || item.enrichmentScore,
             direction: "all",
-            falseDiscoveryRate: item["false discovery rate"],
+            falseDiscoveryRate: item["false discovery rate"] || item.falseDiscoveryRate,
             method: "default",
-            matchingProteinsIds:
-              item["matching proteins in your network (IDs)"],
-            matchingProteinsLabels:
-              item["matching proteins in your network (labels)"],
+            matchingProteinsIds: item["matching proteins in your network (IDs)"] || item.matchingProteinIds,
+            matchingProteinsLabels: item["matching proteins in your network (labels)"] || item.matchingProteinLabels,
           };
         }
       });
@@ -63,7 +64,14 @@ const PlotlyBarChart = ({ chart, handleChartClick }) => {
       const topTerms = filteredData.slice(0, numTerms);
 
       const enrichmentScores = new Map();
-      topTerms.forEach((item) => {
+      
+      topTerms.forEach((item, index) => {
+        // Defensive check for enrichmentScore
+        if (!item || typeof item["enrichmentScore"] !== 'number' || isNaN(item["enrichmentScore"])) {
+          console.warn('Skipping item with invalid enrichmentScore:', item);
+          return;
+        }
+        
         const score = item["enrichmentScore"].toFixed(2);
         if (!enrichmentScores.has(score)) {
           enrichmentScores.set(score, []);
