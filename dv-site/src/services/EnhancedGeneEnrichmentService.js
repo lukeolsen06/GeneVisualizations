@@ -31,7 +31,7 @@ class EnhancedGeneEnrichmentService {
   }
 
   // Resolve identifiers in batches to handle large gene sets
-  async resolveIdentifiersInBatches(geneNames, fromFormat = 'symbol', batchSize = 200) {
+  async resolveIdentifiersInBatches(geneNames, fromFormat = 'symbol', batchSize = 500) {
     const batches = [];
     for (let i = 0; i < geneNames.length; i += batchSize) {
       batches.push(geneNames.slice(i, i + batchSize));
@@ -174,8 +174,8 @@ class EnhancedGeneEnrichmentService {
       } else {
         console.log(`Resolving ${geneNames.length} identifiers (STRING API call)...`);
         
-        // Handle batching if we have more than 200 genes
-        if (geneNames.length > 200) {
+        // Handle batching if we have more than 500 genes
+        if (geneNames.length > 500) {
           console.log(`Large gene set (${geneNames.length} genes), using batched resolution...`);
           resolutionResult = await this.resolveIdentifiersInBatches(geneNames, 'symbol');
         } else {
@@ -296,8 +296,8 @@ class EnhancedGeneEnrichmentService {
     try {
       console.log(`Creating network via backend API with ${geneNames.length} genes...`);
       
-      // Handle batching if we have more than 200 genes
-      if (geneNames.length > 200) {
+      // Handle batching if we have more than 500 genes
+      if (geneNames.length > 500) {
         console.log(`Large gene set (${geneNames.length} genes), using batched network creation...`);
         return await this.createNetworkInBatches(comparison, geneNames, options);
       } else {
@@ -332,7 +332,7 @@ class EnhancedGeneEnrichmentService {
   }
 
   // Create network in batches to handle large gene sets
-  async createNetworkInBatches(comparison, geneNames, options, batchSize = 200) {
+  async createNetworkInBatches(comparison, geneNames, options, batchSize = 500) {
     const batches = [];
     for (let i = 0; i < geneNames.length; i += batchSize) {
       batches.push(geneNames.slice(i, i + batchSize));

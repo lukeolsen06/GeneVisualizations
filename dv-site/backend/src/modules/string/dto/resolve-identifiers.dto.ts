@@ -13,12 +13,12 @@ export class ResolveIdentifiersDto {
     example: ['Gnai3', 'Cdc45', 'Pcna', 'Mcm6', 'Rrm2'],
     type: [String],
     minItems: 1,
-    maxItems: 200
+    maxItems: 500
   })
   @IsArray()
   @IsString({ each: true })
   @ArrayMinSize(1, { message: 'At least 1 identifier is required' })
-  @ArrayMaxSize(200, { message: 'Maximum 200 identifiers allowed per request' })
+  @ArrayMaxSize(500, { message: 'Maximum 500 identifiers allowed per request' })
   identifiers!: string[];
 
   @ApiPropertyOptional({

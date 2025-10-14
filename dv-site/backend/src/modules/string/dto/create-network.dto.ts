@@ -22,12 +22,12 @@ export class CreateNetworkDto {
     example: ['Gnai3', 'Cdc45', 'Pcna', 'Mcm6', 'Rrm2'],
     type: [String],
     minItems: 2,
-    maxItems: 200
+    maxItems: 500
   })
   @IsArray()
   @IsString({ each: true })
   @ArrayMinSize(2, { message: 'At least 2 genes are required to build a network' })
-  @ArrayMaxSize(200, { message: 'Maximum 200 genes allowed per network request' })
+  @ArrayMaxSize(500, { message: 'Maximum 500 genes allowed per network request' })
   geneSet!: string[];
 
   @ApiPropertyOptional({
