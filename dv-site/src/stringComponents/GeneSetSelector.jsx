@@ -114,15 +114,28 @@ const GeneSetSelector = forwardRef(({
 
   // Filter genes based on criteria: (log2FC > threshold OR log2FC < -threshold) AND padj < threshold
   const filterGenes = (data) => {
-    const log2fcThreshold = customThresholds?.log2fc || 1.5;
+    const log2fcThreshold = customThresholds?.log2fc || 1.0;
     const padjThreshold = customThresholds?.padj || 0.1;
+    
+    console.log(`Filtering ${data.length} genes with thresholds: log2fc=${log2fcThreshold}, padj=${padjThreshold}`);
     
     const filtered = data.filter(gene => {
       const log2fc = parseFloat(gene.log2FoldChange);
       const padj = parseFloat(gene.padj);
       
-      return (log2fc > log2fcThreshold || log2fc < -log2fcThreshold) && padj < padjThreshold;
+      const meetsLog2fc = (log2fc > log2fcThreshold || log2fc < -log2fcThreshold);
+      const meetsPadj = padj < padjThreshold;
+      const passes = meetsLog2fc && meetsPadj;
+      
+      // Debug first few genes
+      if (data.indexOf(gene) < 5) {
+        console.log(`Gene ${gene.gene_name}: log2fc=${log2fc}, padj=${padj}, meetsLog2fc=${meetsLog2fc}, meetsPadj=${meetsPadj}, passes=${passes}`);
+      }
+      
+      return passes;
     });
+
+    console.log(`Filtered ${filtered.length} genes from ${data.length} total genes`);
 
     // Separate upregulated and downregulated genes with proper thresholds
     const upregulated = filtered.filter(gene => parseFloat(gene.log2FoldChange) > log2fcThreshold);

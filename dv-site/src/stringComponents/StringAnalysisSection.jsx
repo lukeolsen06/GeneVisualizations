@@ -27,7 +27,7 @@ const StringAnalysisSection = () => {
   
   // State for custom thresholds
   const [customThresholds, setCustomThresholds] = useState({
-    log2fc: 1.5,
+    log2fc: 1.0,
     padj: 0.1
   });
   
@@ -177,7 +177,7 @@ const StringAnalysisSection = () => {
     // Reset all state
     setSelectedComparison('-- choose --');
     setCustomThresholds({
-      log2fc: 1.5,
+      log2fc: 1.0,
       padj: 0.1
     });
     setFilteredGenes([]);
