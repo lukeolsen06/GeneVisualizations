@@ -19,6 +19,7 @@ export class DatabaseConfig implements TypeOrmOptionsFactory {
   constructor(private configService: ConfigService) {}
 
   createTypeOrmOptions(): TypeOrmModuleOptions {
+    console.log('DB host/port', process.env.DB_HOST, process.env.DB_PORT);
     const useSsl = this.configService.get<string>('DB_SSL') === 'true' || this.configService.get<boolean>('DB_SSL', false) === true;
     const sslMode = this.configService.get<string>('DB_SSLMODE');
 
