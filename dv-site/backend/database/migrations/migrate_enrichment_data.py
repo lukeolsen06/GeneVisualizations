@@ -49,6 +49,8 @@ from pathlib import Path
 from typing import List, Dict, Any, Optional
 from datetime import datetime
 
+from dotenv import load_dotenv
+
 # Database imports
 try:
     import psycopg2
@@ -62,6 +64,22 @@ except ImportError:
 # ============================================================================
 # CONFIGURATION
 # ============================================================================
+
+PROJECT_ROOT = Path(__file__).resolve().parents[3]  # dv-site directory
+REPO_ROOT = PROJECT_ROOT.parent
+
+# Load environment variables from potential .env files
+ENV_FILES = [
+    REPO_ROOT / '.env',
+    PROJECT_ROOT / '.env',
+    PROJECT_ROOT / 'backend' / '.env',
+]
+for env_file in ENV_FILES:
+    if env_file.exists():
+        load_dotenv(env_file)
+        print(f"✅ Loaded environment variables from {env_file}")
+    else:
+        print(f"❌ Environment file not found: {env_file}")
 
 # Database connection settings
 # These should match your docker-compose.yml settings

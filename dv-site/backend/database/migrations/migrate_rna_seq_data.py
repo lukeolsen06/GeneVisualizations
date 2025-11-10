@@ -14,12 +14,15 @@ Example:
 """
 
 import argparse
-import pandas as pd
-import psycopg2
-from psycopg2.extras import RealDictCursor
 import os
 import sys
 from pathlib import Path
+
+import pandas as pd
+import psycopg2
+from dotenv import load_dotenv
+from psycopg2.extras import RealDictCursor
+
 from schema_definitions import (
     get_create_table_sql,
     get_create_indexes_sql,
@@ -27,6 +30,22 @@ from schema_definitions import (
     get_insert_sql,
     get_count_rows_sql
 )
+
+PROJECT_ROOT = Path(__file__).resolve().parents[3]  # dv-site directory
+REPO_ROOT = PROJECT_ROOT.parent
+
+# Load environment variables from potential .env files
+ENV_FILES = [
+    REPO_ROOT / '.env',
+    PROJECT_ROOT / '.env',
+    PROJECT_ROOT / 'backend' / '.env',
+]
+for env_file in ENV_FILES:
+    if env_file.exists():
+        load_dotenv(env_file)
+        print(f"✅ Loaded environment variables from {env_file}")
+    else:
+        print(f"❌ Environment file not found: {env_file}")
 
 # Database connection settings
 DB_CONFIG = {
@@ -37,6 +56,8 @@ DB_CONFIG = {
     'password': os.getenv('DB_PASSWORD', 'gene_password_2024'),
     'sslmode': os.getenv('DB_SSLMODE', 'prefer')
 }
+
+APPLY_DB_GRANTS = os.getenv('DB_APPLY_GRANTS', 'true').lower() == 'true'
 
 
 def configure_db_from_args(args: argparse.Namespace):
@@ -81,9 +102,12 @@ def create_comparison_table(conn, comparison_name, columns=None):
         cursor.execute(create_indexes_sql)
         print(f"✅ Created indexes for '{comparison_name}'")
         
-        # Grant permissions using schema definitions
-        grant_sql = get_grant_permissions_sql(comparison_name)
-        cursor.execute(grant_sql)
+        # Grant permissions using schema definitions (optional)
+        if APPLY_DB_GRANTS:
+            grant_sql = get_grant_permissions_sql(comparison_name)
+            cursor.execute(grant_sql)
+        else:
+            print(f"⚠️ Skipping grants for '{comparison_name}' (DB_APPLY_GRANTS is false)")
         
         conn.commit()
         cursor.close()
@@ -171,9 +195,13 @@ def insert_data_to_database(conn, df, comparison_name):
         conn.rollback()
         sys.exit(1)
 
+SRC_DIR = PROJECT_ROOT / 'src'
+GRAPHS_DIR = SRC_DIR / 'graphs'
+
+
 def get_available_comparisons():
     """Get list of available comparison directories"""
-    graphs_dir = Path("../../src/graphs")
+    graphs_dir = GRAPHS_DIR
     if not graphs_dir.exists():
         return []
     
@@ -192,8 +220,7 @@ def migrate_single_comparison(comparison_name):
     print(f"\n🔄 Migrating {comparison_name}...")
     print("-" * 40)
     
-    # Construct CSV file path
-    csv_path = Path(f"../../src/graphs/{comparison_name}/{comparison_name}.DEG.all.csv")
+    csv_path = GRAPHS_DIR / comparison_name / f"{comparison_name}.DEG.all.csv"
     
     # Check if file exists
     if not csv_path.exists():
