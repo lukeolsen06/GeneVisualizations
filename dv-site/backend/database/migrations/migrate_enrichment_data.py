@@ -66,11 +66,12 @@ except ImportError:
 # Database connection settings
 # These should match your docker-compose.yml settings
 DB_CONFIG = {
-    'host': 'localhost',
-    'port': 5431,                      # External port from docker-compose
-    'database': 'gene_visualizations',
-    'user': 'gene_admin',
-    'password': 'gene_password_2024'
+    'host': os.getenv('DB_HOST', 'localhost'),
+    'port': int(os.getenv('DB_PORT', 5431)),  # External port from docker-compose
+    'database': os.getenv('DB_NAME', 'gene_visualizations'),
+    'user': os.getenv('DB_USERNAME', 'gene_admin'),
+    'password': os.getenv('DB_PASSWORD', 'gene_password_2024'),
+    'sslmode': os.getenv('DB_SSLMODE', 'prefer')
 }
 
 # Path to the source JSON files (relative to script location)
@@ -90,6 +91,16 @@ DATABASE_MAPPING = {
 # DATABASE CONNECTION
 # ============================================================================
 
+def configure_db_from_args(args: argparse.Namespace):
+    """Override DB config using CLI arguments."""
+    DB_CONFIG['host'] = args.host
+    DB_CONFIG['port'] = args.port
+    DB_CONFIG['database'] = args.database
+    DB_CONFIG['user'] = args.user
+    DB_CONFIG['password'] = args.password
+    DB_CONFIG['sslmode'] = args.sslmode
+
+
 def get_db_connection():
     """
     Create and return a PostgreSQL database connection.
@@ -101,7 +112,14 @@ def get_db_connection():
         psycopg2.Error: If connection fails
     """
     try:
-        conn = psycopg2.connect(**DB_CONFIG)
+        conn = psycopg2.connect(
+            host=DB_CONFIG['host'],
+            port=DB_CONFIG['port'],
+            database=DB_CONFIG['database'],
+            user=DB_CONFIG['user'],
+            password=DB_CONFIG['password'],
+            sslmode=DB_CONFIG['sslmode']
+        )
         return conn
     except psycopg2.Error as e:
         print(f"❌ Failed to connect to database: {e}")
@@ -507,8 +525,21 @@ Examples:
         action='store_true',
         help='Clear existing enrichment data before inserting'
     )
+
+    parser.add_argument('--host', default=DB_CONFIG['host'], help='Database host')
+    parser.add_argument('--port', type=int, default=DB_CONFIG['port'], help='Database port')
+    parser.add_argument('--database', default=DB_CONFIG['database'], help='Database name')
+    parser.add_argument('--user', default=DB_CONFIG['user'], help='Database user')
+    parser.add_argument('--password', default=DB_CONFIG['password'], help='Database password')
+    parser.add_argument(
+        '--sslmode',
+        default=DB_CONFIG['sslmode'],
+        help='PostgreSQL sslmode (disable, allow, prefer, require, verify-full)'
+    )
     
     args = parser.parse_args()
+
+    configure_db_from_args(args)
     
     try:
         migrate_enrichment_data(

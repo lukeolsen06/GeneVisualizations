@@ -19,13 +19,27 @@ export class DatabaseConfig implements TypeOrmOptionsFactory {
   constructor(private configService: ConfigService) {}
 
   createTypeOrmOptions(): TypeOrmModuleOptions {
-    return {
+    const useSsl = this.configService.get<string>('DB_SSL') === 'true' || this.configService.get<boolean>('DB_SSL', false) === true;
+    const sslMode = this.configService.get<string>('DB_SSLMODE');
+
+    const extraOptions: Record<string, unknown> = {
+      max: 10, // Maximum number of connections
+      min: 2,  // Minimum number of connections
+      acquire: 30000, // Maximum time to get connection
+      idle: 10000,    // Maximum idle time
+    };
+
+    if (sslMode) {
+      extraOptions.sslmode = sslMode;
+    }
+
+    const baseOptions: TypeOrmModuleOptions = {
       type: 'postgres',
-      host: this.configService.get<string>('DB_HOST'),
-      port: this.configService.get<number>('DB_PORT'),
+      host: this.configService.get<string>('DB_HOST', 'localhost'),
+      port: Number(this.configService.get<string>('DB_PORT', '5432')),
       username: this.configService.getOrThrow<string>('DB_USERNAME'),
       password: this.configService.getOrThrow<string>('DB_PASSWORD'),
-      database: this.configService.get<string>('DB_NAME'),
+      database: this.configService.get<string>('DB_NAME', 'gene_visualizations'),
       
       // Register entities explicitly
       // This ensures TypeORM can find and load entity metadata correctly
@@ -38,16 +52,18 @@ export class DatabaseConfig implements TypeOrmOptionsFactory {
       ],
       
       // Development settings
-      synchronize: this.configService.get<boolean>('DB_SYNCHRONIZE', false), // Don't auto-sync in production
-      logging: this.configService.get<boolean>('DB_LOGGING', true),
+      synchronize: this.configService.get<string>('DB_SYNCHRONIZE') === 'true' || this.configService.get<boolean>('DB_SYNCHRONIZE', false) === true, // Don't auto-sync in production
+      logging: this.configService.get<string>('DB_LOGGING') === 'true' || this.configService.get<boolean>('DB_LOGGING', false) === true,
       
       // Connection pool settings
-      extra: {
-        max: 10, // Maximum number of connections
-        min: 2,  // Minimum number of connections
-        acquire: 30000, // Maximum time to get connection
-        idle: 10000,    // Maximum idle time
-      },
+      extra: extraOptions,
+      ...(useSsl && {
+        ssl: {
+          rejectUnauthorized: false,
+        },
+      }),
     };
+
+    return baseOptions;
   }
 }

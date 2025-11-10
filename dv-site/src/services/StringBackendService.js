@@ -13,7 +13,9 @@ import axios from 'axios';
 class StringBackendService {
   constructor() {
     // Backend API base URL
-    this.baseURL = 'http://localhost:3001/api/string';
+    const apiBase =
+      import.meta?.env?.VITE_API_BASE_URL || 'http://localhost:3001/api';
+    this.baseURL = `${apiBase.replace(/\/$/, '')}/string`;
   }
 
   /**

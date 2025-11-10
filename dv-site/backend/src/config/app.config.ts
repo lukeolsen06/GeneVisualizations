@@ -23,6 +23,8 @@ export default registerAs('app', () => ({
     name: process.env.DB_NAME || 'gene_visualizations',
     synchronize: process.env.DB_SYNCHRONIZE === 'true',
     logging: process.env.DB_LOGGING === 'true',
+    ssl: process.env.DB_SSL === 'true',
+    sslMode: process.env.DB_SSLMODE || undefined,
   },
   
   // Redis settings (for caching)
