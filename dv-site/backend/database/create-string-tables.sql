@@ -85,33 +85,33 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_string_edges_unique ON string_edges(networ
 -- ============================================================================
 
 -- Constraints for string_networks
-ALTER TABLE string_networks ADD CONSTRAINT IF NOT EXISTS chk_confidence_threshold 
+ALTER TABLE string_networks ADD CONSTRAINT chk_confidence_threshold 
     CHECK (confidence_threshold >= 0 AND confidence_threshold <= 1000);
 
-ALTER TABLE string_networks ADD CONSTRAINT IF NOT EXISTS chk_node_count 
+ALTER TABLE string_networks ADD CONSTRAINT chk_node_count 
     CHECK (node_count >= 0);
 
-ALTER TABLE string_networks ADD CONSTRAINT IF NOT EXISTS chk_edge_count 
+ALTER TABLE string_networks ADD CONSTRAINT chk_edge_count 
     CHECK (edge_count >= 0);
 
-ALTER TABLE string_networks ADD CONSTRAINT IF NOT EXISTS chk_resolved_gene_count 
+ALTER TABLE string_networks ADD CONSTRAINT chk_resolved_gene_count 
     CHECK (resolved_gene_count >= 0);
 
 -- Constraints for string_nodes
-ALTER TABLE string_nodes ADD CONSTRAINT IF NOT EXISTS chk_padj_range 
+ALTER TABLE string_nodes ADD CONSTRAINT chk_padj_range 
     CHECK (padj IS NULL OR (padj >= 0 AND padj <= 1));
 
-ALTER TABLE string_nodes ADD CONSTRAINT IF NOT EXISTS chk_centrality_range 
+ALTER TABLE string_nodes ADD CONSTRAINT chk_centrality_range 
     CHECK (normalized_degree_centrality IS NULL OR (normalized_degree_centrality >= 0 AND normalized_degree_centrality <= 1));
 
-ALTER TABLE string_nodes ADD CONSTRAINT IF NOT EXISTS chk_degree_positive 
+ALTER TABLE string_nodes ADD CONSTRAINT chk_degree_positive 
     CHECK (degree IS NULL OR degree >= 0);
 
 -- Constraints for string_edges
-ALTER TABLE string_edges ADD CONSTRAINT IF NOT EXISTS chk_interaction_score_range 
+ALTER TABLE string_edges ADD CONSTRAINT chk_interaction_score_range 
     CHECK (interaction_score >= 0 AND interaction_score <= 1000);
 
-ALTER TABLE string_edges ADD CONSTRAINT IF NOT EXISTS chk_confidence_level 
+ALTER TABLE string_edges ADD CONSTRAINT chk_confidence_level 
     CHECK (confidence_level IN ('low', 'medium', 'high'));
 
 -- ============================================================================
