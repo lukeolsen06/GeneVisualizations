@@ -395,7 +395,8 @@ export class StringService {
     const savedNetwork = await this.networkRepository.save(network);
     
     // Process and save nodes
-    const nodeMap = new Map();
+    const nodeMap = new Map<string, StringNodeEntity>();
+    const edgeSet = new Set<string>();
     for (const interaction of networkData) {
       const sourceId = interaction.stringId_A;
       const targetId = interaction.stringId_B;
@@ -422,9 +423,23 @@ export class StringService {
         nodeMap.set(targetId, savedTargetNode);
       }
       
+      // Build a canonical edge key to avoid duplicates (STRING may return bidirectional rows)
+      const edgeKey = `${sourceId}->${targetId}`;
+      if (edgeSet.has(edgeKey)) {
+        continue;
+      }
+      edgeSet.add(edgeKey);
+
       // Add edge
       const sourceNode = nodeMap.get(sourceId);
       const targetNode = nodeMap.get(targetId);
+
+      if (!sourceNode || !targetNode) {
+        this.logger.warn(
+          `Skipping edge ${sourceId}->${targetId} due to missing node reference`,
+        );
+        continue;
+      }
       const edge = this.edgeRepository.create({
         networkId: savedNetwork.id,
         sourceStringId: sourceId,
@@ -439,7 +454,7 @@ export class StringService {
     
     // Update network with final counts
     const finalNodeCount = nodeMap.size;
-    const finalEdgeCount = networkData.length;
+    const finalEdgeCount = edgeSet.size;
     
     await this.networkRepository.update(savedNetwork.id, {
       nodeCount: finalNodeCount,
