@@ -17,8 +17,17 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
   // Enable CORS for frontend communication
+  const corsOriginEnv = process.env.FRONTEND_ORIGIN;
+  const corsOrigins = corsOriginEnv
+    ? corsOriginEnv.split(',').map((origin) => origin.trim()).filter(Boolean)
+    : [
+        'http://localhost:3000',
+        'http://localhost:5173',
+        'http://localhost:5174',
+      ];
+
   app.enableCors({
-    origin: ['http://localhost:3000', 'http://localhost:5173', 'http://localhost:5174'], // Vite dev server ports
+    origin: corsOrigins,
     credentials: true,
   });
 
