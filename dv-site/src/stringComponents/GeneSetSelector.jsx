@@ -3,12 +3,10 @@ import Dropdown from '../visualizeComponents/DropDown';
 import { dropdownOptions } from '../visualizeComponents/VolcanoVisualizationsSection/imports';
 import './GeneSetSelector.css';
 
-const csvModules = import.meta.glob(
-  '../graphs/**/*.DEG.all.csv?raw',
-  {
-    eager: true,
-  },
-);
+const csvModules = import.meta.glob('../graphs/**/*.DEG.all.csv', {
+  eager: true,
+  as: 'raw',
+});
 
 /**
  * GeneSetSelector Component
@@ -84,15 +82,14 @@ const GeneSetSelector = forwardRef(({
     onLoadingChange(true);
     
     try {
-      const csvPath = `../graphs/${comparison}/${comparison}.DEG.all.csv?raw`;
+      const csvPath = `../graphs/${comparison}/${comparison}.DEG.all.csv`;
       const module = csvModules[csvPath];
 
       if (!module) {
         throw new Error(`CSV data not found for ${comparison}. Ensure the file exists and path is correct.`);
       }
 
-      const csvText = typeof module === 'string' ? module : module.default;
-      const parsedData = parseCsvData(csvText);
+      const parsedData = parseCsvData(module);
       setCsvData(parsedData);
       
     } catch (error) {
