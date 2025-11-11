@@ -1,6 +1,6 @@
 import "./DEGListDatasets.css";
 import React, { useState, useEffect } from "react";
-import PlotlyJSPlot from "../../graphs/PlotlyJSPloWLabels";
+import PlotlyJSPlot from "../../graphs/PlotlyJSploWLabels";
 import "../../graphs/PlotlyGraph.css";
 import Toggle from "../ToggleGraphComponent";
 
