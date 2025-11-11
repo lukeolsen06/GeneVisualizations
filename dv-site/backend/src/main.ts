@@ -18,16 +18,10 @@ async function bootstrap() {
 
   // Enable CORS for frontend communication
   const corsOriginEnv = process.env.FRONTEND_ORIGIN;
-  const corsOrigins = corsOriginEnv
-    ? corsOriginEnv.split(',').map((origin) => origin.trim()).filter(Boolean)
-    : [
-        'http://localhost:3000',
-        'http://localhost:5173',
-        'http://localhost:5174',
-      ];
 
+  console.log('Allowed CORS origins:', corsOriginEnv);
   app.enableCors({
-    origin: corsOrigins,
+    origin: corsOriginEnv,
     credentials: true,
   });
 
