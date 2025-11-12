@@ -53,15 +53,19 @@ export class StringService {
    * Includes caching logic to avoid duplicate API calls
    */
   async createNetwork(createNetworkDto: CreateNetworkDto): Promise<NetworkResponseDto> {
+    const overallStartTime = Date.now();
     const { comparison, geneSet, confidenceThreshold = 400, networkType = 'full' } = createNetworkDto;
     
     this.logger.log(`Creating network for comparison: ${comparison} with ${geneSet.length} genes`);
     
     // Step 1: Resolve gene identifiers to STRING IDs first
+    const resolveStartTime = Date.now();
     const resolvedIdentifiers = await this.resolveIdentifiers({
       identifiers: geneSet,
       fromFormat: 'symbol'
     });
+    const resolveTime = Date.now() - resolveStartTime;
+    this.logger.log(`Identifier resolution completed in ${resolveTime}ms`);
     
     const stringIds = resolvedIdentifiers.mappings
       .filter(mapping => mapping.isResolved && mapping.stringId)
@@ -78,11 +82,17 @@ export class StringService {
     try {
       
       // Step 3: Check if network already exists (based on resolved genes)
+      const cacheCheckStartTime = Date.now();
       const existingNetwork = await this.findNetworkByHash(comparison, geneSetHash);
+      const cacheCheckTime = Date.now() - cacheCheckStartTime;
+      
       if (existingNetwork) {
-        this.logger.log(`Found existing network with hash: ${geneSetHash} for ${resolvedGeneNames.length} resolved genes`);
+        const totalTime = Date.now() - overallStartTime;
+        this.logger.log(`Found existing network with hash: ${geneSetHash} for ${resolvedGeneNames.length} resolved genes (Cache check: ${cacheCheckTime}ms, Total: ${totalTime}ms)`);
         return this.mapNetworkToResponseDto(existingNetwork, true); // includeData = true
       }
+      
+      this.logger.log(`Cache check completed in ${cacheCheckTime}ms - no existing network found`);
       
       // Step 4: Log the filtering context for debugging
       this.logger.log(`Creating new network: ${geneSet.length} input genes → ${resolvedGeneNames.length} resolved genes`);
@@ -93,17 +103,20 @@ export class StringService {
         );
       }
       
-      // Step 4: Fetch network data from STRING API
+      // Step 5: Fetch network data from STRING API
+      const apiFetchStartTime = Date.now();
       const networkData = await this.fetchNetworkFromStringApi(stringIds, {
         confidenceThreshold,
         networkType
       });
+      const apiFetchTime = Date.now() - apiFetchStartTime;
+      this.logger.log(`STRING API fetch completed in ${apiFetchTime}ms (${networkData.length} interactions)`);
       
       if (!networkData || networkData.length === 0) {
         throw new BadRequestException('No network data found for the provided gene set');
       }
       
-      // Step 5: Store network in database
+      // Step 6: Store network in database
       const savedNetwork = await this.saveNetworkToDatabase({
         comparison,
         geneSet,
@@ -114,12 +127,14 @@ export class StringService {
         resolvedIdentifiers
       });
       
-      this.logger.log(`Successfully created network with ID: ${savedNetwork.id}`);
+      const totalTime = Date.now() - overallStartTime;
+      this.logger.log(`Successfully created network with ID: ${savedNetwork.id} (Total time: ${totalTime}ms - Resolution: ${resolveTime}ms, Cache: ${cacheCheckTime}ms, API: ${apiFetchTime}ms)`);
       return this.mapNetworkToResponseDto(savedNetwork, true);
       
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-      this.logger.error(`Failed to create network: ${errorMessage}`);
+      const totalTime = Date.now() - overallStartTime;
+      this.logger.error(`Failed to create network after ${totalTime}ms: ${errorMessage}`);
       
       // Store failed network attempt for debugging
       await this.saveFailedNetwork({
@@ -325,6 +340,7 @@ export class StringService {
 
   /**
    * Find existing network by hash
+   * Loads relations immediately since cached networks need full data for response
    */
   private async findNetworkByHash(comparison: string, geneSetHash: string): Promise<StringNetworkEntity | null> {
     return this.networkRepository.findOne({
@@ -367,6 +383,7 @@ export class StringService {
 
   /**
    * Save successful network to database
+   * Optimized with batch inserts to avoid N+1 query problem
    */
   private async saveNetworkToDatabase(data: {
     comparison: string;
@@ -377,6 +394,7 @@ export class StringService {
     networkData: any[];
     resolvedIdentifiers: ResolveIdentifiersResponseDto;
   }): Promise<StringNetworkEntity> {
+    const startTime = Date.now();
     const { comparison, geneSet, geneSetHash, confidenceThreshold, networkType, networkData, resolvedIdentifiers } = data;
     
     // Create network entity
@@ -393,34 +411,41 @@ export class StringService {
     });
     
     const savedNetwork = await this.networkRepository.save(network);
+    const networkSaveTime = Date.now() - startTime;
+    this.logger.log(`Saved network entity in ${networkSaveTime}ms`);
     
-    // Process and save nodes
-    const nodeMap = new Map<string, StringNodeEntity>();
+    // Step 1: Collect all unique nodes first (without saving)
+    const nodeMap = new Map<string, { stringId: string; preferredName: string }>();
     const edgeSet = new Set<string>();
+    const edgesToCreate: Array<{
+      networkId: number;
+      sourceStringId: string;
+      sourceGeneName: string;
+      targetStringId: string;
+      targetGeneName: string;
+      interactionScore: number;
+      confidenceLevel: string;
+    }> = [];
+    
+    const nodeCollectionStart = Date.now();
     for (const interaction of networkData) {
       const sourceId = interaction.stringId_A;
       const targetId = interaction.stringId_B;
       
-      // Add source node
+      // Collect source node
       if (!nodeMap.has(sourceId)) {
-        const sourceNode = this.nodeRepository.create({
-          networkId: savedNetwork.id,
+        nodeMap.set(sourceId, {
           stringId: sourceId,
           preferredName: interaction.preferredName_A || sourceId
         });
-        const savedSourceNode = await this.nodeRepository.save(sourceNode);
-        nodeMap.set(sourceId, savedSourceNode);
       }
       
-      // Add target node
+      // Collect target node
       if (!nodeMap.has(targetId)) {
-        const targetNode = this.nodeRepository.create({
-          networkId: savedNetwork.id,
+        nodeMap.set(targetId, {
           stringId: targetId,
           preferredName: interaction.preferredName_B || targetId
         });
-        const savedTargetNode = await this.nodeRepository.save(targetNode);
-        nodeMap.set(targetId, savedTargetNode);
       }
       
       // Build a canonical edge key to avoid duplicates (STRING may return bidirectional rows)
@@ -430,7 +455,7 @@ export class StringService {
       }
       edgeSet.add(edgeKey);
 
-      // Add edge
+      // Collect edge data
       const sourceNode = nodeMap.get(sourceId);
       const targetNode = nodeMap.get(targetId);
 
@@ -440,7 +465,8 @@ export class StringService {
         );
         continue;
       }
-      const edge = this.edgeRepository.create({
+      
+      edgesToCreate.push({
         networkId: savedNetwork.id,
         sourceStringId: sourceId,
         sourceGeneName: sourceNode.preferredName,
@@ -449,10 +475,35 @@ export class StringService {
         interactionScore: parseFloat(interaction.score) || 0,
         confidenceLevel: this.getConfidenceLevel(parseFloat(interaction.score) || 0)
       });
-      await this.edgeRepository.save(edge);
     }
+    const nodeCollectionTime = Date.now() - nodeCollectionStart;
+    this.logger.log(`Collected ${nodeMap.size} nodes and ${edgesToCreate.length} edges in ${nodeCollectionTime}ms`);
     
-    // Update network with final counts
+    // Step 2: Batch insert all nodes at once
+    const nodeInsertStart = Date.now();
+    const nodesToInsert = Array.from(nodeMap.values()).map(nodeData =>
+      this.nodeRepository.create({
+        networkId: savedNetwork.id,
+        stringId: nodeData.stringId,
+        preferredName: nodeData.preferredName
+      })
+    );
+    
+    const savedNodes = await this.nodeRepository.save(nodesToInsert);
+    const nodeInsertTime = Date.now() - nodeInsertStart;
+    this.logger.log(`Batch inserted ${savedNodes.length} nodes in ${nodeInsertTime}ms`);
+    
+    // Step 3: Batch insert all edges at once
+    const edgeInsertStart = Date.now();
+    const edgesToInsert = edgesToCreate.map(edgeData =>
+      this.edgeRepository.create(edgeData)
+    );
+    
+    await this.edgeRepository.save(edgesToInsert);
+    const edgeInsertTime = Date.now() - edgeInsertStart;
+    this.logger.log(`Batch inserted ${edgesToInsert.length} edges in ${edgeInsertTime}ms`);
+    
+    // Step 5: Update network with final counts
     const finalNodeCount = nodeMap.size;
     const finalEdgeCount = edgeSet.size;
     
@@ -460,6 +511,9 @@ export class StringService {
       nodeCount: finalNodeCount,
       edgeCount: finalEdgeCount
     });
+    
+    const totalTime = Date.now() - startTime;
+    this.logger.log(`Total database save time: ${totalTime}ms (Network: ${networkSaveTime}ms, Collection: ${nodeCollectionTime}ms, Nodes: ${nodeInsertTime}ms, Edges: ${edgeInsertTime}ms)`);
     
     // Reload network with updated counts
     return this.networkRepository.findOne({
