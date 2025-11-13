@@ -23,16 +23,17 @@ export class DatabaseConfig implements TypeOrmOptionsFactory {
     const useSsl = this.configService.get<string>('DB_SSL') === 'true' || this.configService.get<boolean>('DB_SSL', false) === true;
     const sslMode = this.configService.get<string>('DB_SSLMODE');
 
-    // Supabase connection pooler requires specific settings
+    // Connection pool settings - optimized for both Supabase and Render PostgreSQL
+    // These settings help prevent "Connection terminated unexpectedly" errors
     const extraOptions: Record<string, unknown> = {
-      max: 5, // Reduced for Supabase free tier limits
-      min: 1, // Minimum connections
-      acquire: 60000, // Increased timeout for Supabase (60 seconds)
-      idle: 20000, // Idle timeout (20 seconds)
+      max: 10, // Maximum connections in pool
+      min: 2, // Minimum connections to keep alive (prevents connection drops)
+      acquire: 60000, // Timeout to acquire connection (60 seconds)
+      idle: 30000, // Idle timeout before closing connection (30 seconds) 
       evict: 1000, // Check for idle connections every second
-      // Connection timeout settings for Supabase pooler
+      // Connection timeout settings
       connectionTimeoutMillis: 10000, // 10 seconds to establish connection
-      statement_timeout: 30000, // 30 seconds for queries
+      statement_timeout: 60000, // 60 seconds for queries (increased for large network queries)
     };
 
     if (sslMode) {

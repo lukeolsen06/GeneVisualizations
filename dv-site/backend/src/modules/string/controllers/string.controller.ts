@@ -154,8 +154,26 @@ export class StringController {
     }
   })
   async createNetwork(@Body() createNetworkDto: CreateNetworkDto): Promise<NetworkResponseDto> {
-    this.logger.log(`Creating network for comparison: ${createNetworkDto.comparison}`);
-    return this.stringService.createNetwork(createNetworkDto);
+    this.logger.log(`Creating network for comparison: ${createNetworkDto.comparison} with ${createNetworkDto.geneSet?.length || 0} genes`);
+    
+    try {
+      return await this.stringService.createNetwork(createNetworkDto);
+    } catch (error) {
+      // Log detailed error information
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      const errorStack = error instanceof Error ? error.stack : undefined;
+      
+      this.logger.error(`Failed to create network for ${createNetworkDto.comparison}:`, {
+        message: errorMessage,
+        stack: errorStack,
+        comparison: createNetworkDto.comparison,
+        geneSetSize: createNetworkDto.geneSet?.length || 0,
+        errorName: error instanceof Error ? error.name : typeof error
+      });
+      
+      // Re-throw to let NestJS handle the HTTP response
+      throw error;
+    }
   }
 
   /**

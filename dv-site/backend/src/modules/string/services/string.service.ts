@@ -158,15 +158,20 @@ export class StringService {
       const totalTime = Date.now() - overallStartTime;
       this.logger.error(`Failed to create network after ${totalTime}ms: ${errorMessage}`);
       
-      // Store failed network attempt for debugging
-      await this.saveFailedNetwork({
-        comparison,
-        geneSet,
-        geneSetHash,
-        confidenceThreshold,
-        networkType,
-        errorMessage
-      });
+      // Store failed network attempt for debugging (don't let this mask the original error)
+      try {
+        await this.saveFailedNetwork({
+          comparison,
+          geneSet,
+          geneSetHash,
+          confidenceThreshold,
+          networkType,
+          errorMessage
+        });
+      } catch (saveError) {
+        this.logger.warn(`Failed to save failed network record: ${saveError instanceof Error ? saveError.message : 'Unknown error'}`);
+        // Don't throw - we want to preserve the original error
+      }
       
       throw error;
     }
@@ -362,21 +367,51 @@ export class StringService {
 
   /**
    * Find existing network by hash
-   * Loads relations immediately since cached networks need full data for response
-   * Note: For very large networks, this may use significant memory
+   * First checks without relations for performance, then loads relations if found
+   * This avoids loading large datasets unnecessarily
    */
   private async findNetworkByHash(comparison: string, geneSetHash: string): Promise<StringNetworkEntity | null> {
-    const network = await this.networkRepository.findOne({
-      where: { comparison, geneSetHash },
-      relations: ['nodes', 'edges'] // Load the relations for cached networks
-    });
-    
-    // Log warning for very large cached networks
-    if (network && network.edgeCount > 10000) {
-      this.logger.warn(`Loading large cached network: ${network.nodeCount} nodes, ${network.edgeCount} edges`);
+    try {
+      // First, check if network exists without loading relations (faster, less memory)
+      const networkExists = await this.networkRepository.findOne({
+        where: { comparison, geneSetHash },
+        select: ['id', 'comparison', 'geneSetHash', 'nodeCount', 'edgeCount']
+      });
+      
+      if (!networkExists) {
+        return null;
+      }
+      
+      // If network exists, load it with relations
+      // Use a query builder for better control and error handling
+      const network = await this.networkRepository
+        .createQueryBuilder('network')
+        .where('network.comparison = :comparison', { comparison })
+        .andWhere('network.geneSetHash = :geneSetHash', { geneSetHash })
+        .leftJoinAndSelect('network.nodes', 'nodes')
+        .leftJoinAndSelect('network.edges', 'edges')
+        .getOne();
+      
+      // Log warning for very large cached networks
+      if (network && network.edgeCount > 10000) {
+        this.logger.warn(`Loading large cached network: ${network.nodeCount} nodes, ${network.edgeCount} edges`);
+      }
+      
+      return network;
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      this.logger.error(`Database error while checking for cached network: ${errorMessage}`);
+      
+      // If it's a connection error, return null to allow retry
+      // This prevents the entire request from failing due to transient connection issues
+      if (errorMessage.includes('Connection') || errorMessage.includes('terminated') || errorMessage.includes('ECONNRESET')) {
+        this.logger.warn('Database connection issue detected, will attempt to create new network');
+        return null;
+      }
+      
+      // Re-throw other errors
+      throw error;
     }
-    
-    return network;
   }
 
   /**
