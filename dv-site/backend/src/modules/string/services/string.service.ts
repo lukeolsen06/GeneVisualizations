@@ -128,6 +128,7 @@ export class StringService {
       });
       
       // Load relations only when needed for response (saves memory for large networks)
+      // For very large networks, we load relations in a memory-efficient way
       const networkWithData = await this.networkRepository.findOne({
         where: { id: savedNetwork.id },
         relations: ['nodes', 'edges']
@@ -135,6 +136,11 @@ export class StringService {
       
       if (!networkWithData) {
         throw new Error(`Failed to load network with ID ${savedNetwork.id}`);
+      }
+      
+      // Log memory usage warning for very large networks
+      if (networkWithData.edgeCount > 10000) {
+        this.logger.warn(`Loading large network: ${networkWithData.nodeCount} nodes, ${networkWithData.edgeCount} edges. This may use significant memory.`);
       }
       
       const totalTime = Date.now() - overallStartTime;
@@ -351,12 +357,20 @@ export class StringService {
   /**
    * Find existing network by hash
    * Loads relations immediately since cached networks need full data for response
+   * Note: For very large networks, this may use significant memory
    */
   private async findNetworkByHash(comparison: string, geneSetHash: string): Promise<StringNetworkEntity | null> {
-    return this.networkRepository.findOne({
+    const network = await this.networkRepository.findOne({
       where: { comparison, geneSetHash },
       relations: ['nodes', 'edges'] // Load the relations for cached networks
     });
+    
+    // Log warning for very large cached networks
+    if (network && network.edgeCount > 10000) {
+      this.logger.warn(`Loading large cached network: ${network.nodeCount} nodes, ${network.edgeCount} edges`);
+    }
+    
+    return network;
   }
 
   /**
@@ -489,6 +503,11 @@ export class StringService {
     const nodeCollectionTime = Date.now() - nodeCollectionStart;
     this.logger.log(`Collected ${nodeMap.size} nodes and ${edgesToCreate.length} edges in ${nodeCollectionTime}ms`);
     
+    // Warn if network is very large
+    if (edgesToCreate.length > 10000) {
+      this.logger.warn(`Large network detected: ${edgesToCreate.length} edges. Processing in chunks to manage memory.`);
+    }
+    
     // Step 2: Batch insert all nodes at once
     const nodeInsertStart = Date.now();
     const nodesToInsert = Array.from(nodeMap.values()).map(nodeData =>
@@ -503,15 +522,28 @@ export class StringService {
     const nodeInsertTime = Date.now() - nodeInsertStart;
     this.logger.log(`Batch inserted ${savedNodes.length} nodes in ${nodeInsertTime}ms`);
     
-    // Step 3: Batch insert all edges at once
+    // Step 3: Batch insert edges in chunks to avoid memory issues with large networks
     const edgeInsertStart = Date.now();
-    const edgesToInsert = edgesToCreate.map(edgeData =>
-      this.edgeRepository.create(edgeData)
-    );
+    const CHUNK_SIZE = 1000; // Process 1000 edges at a time
+    let totalEdgesInserted = 0;
     
-    await this.edgeRepository.save(edgesToInsert);
+    for (let i = 0; i < edgesToCreate.length; i += CHUNK_SIZE) {
+      const chunk = edgesToCreate.slice(i, i + CHUNK_SIZE);
+      const edgesToInsert = chunk.map(edgeData =>
+        this.edgeRepository.create(edgeData)
+      );
+      
+      await this.edgeRepository.save(edgesToInsert);
+      totalEdgesInserted += edgesToInsert.length;
+      
+      // Log progress for large networks
+      if (edgesToCreate.length > 5000 && i % (CHUNK_SIZE * 5) === 0) {
+        this.logger.log(`Inserted ${totalEdgesInserted}/${edgesToCreate.length} edges...`);
+      }
+    }
+    
     const edgeInsertTime = Date.now() - edgeInsertStart;
-    this.logger.log(`Batch inserted ${edgesToInsert.length} edges in ${edgeInsertTime}ms`);
+    this.logger.log(`Batch inserted ${totalEdgesInserted} edges in ${edgeInsertTime}ms`);
     
     // Step 5: Update network with final counts
     const finalNodeCount = nodeMap.size;

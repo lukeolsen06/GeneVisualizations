@@ -17,6 +17,28 @@ services:
       - gene-viz-network
     restart: unless-stopped
 
+  backend:
+    build:
+      context: ../backend
+      dockerfile: Dockerfile
+    container_name: gene-viz-backend
+    environment:
+      NODE_ENV: production
+      NODE_OPTIONS: --max-old-space-size=4096
+      PORT: 3001
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USERNAME: gene_admin
+      DB_PASSWORD: gene_password_2024
+      DB_NAME: gene_visualizations
+    ports:
+      - "3001:3001"
+    networks:
+      - gene-viz-network
+    depends_on:
+      - postgres
+    restart: unless-stopped
+
 volumes:
   postgres_data:
 
