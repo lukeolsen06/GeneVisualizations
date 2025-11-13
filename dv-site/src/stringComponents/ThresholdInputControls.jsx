@@ -19,18 +19,24 @@ const ThresholdInputControls = ({
   const [tempPadj, setTempPadj] = useState(initialPadj.toString());
 
   // Validate and set log2FC threshold (without notifying parent)
+  // Range: 0 to 3, step: 0.5
   const validateAndSetLog2FC = (value) => {
     const numericValue = parseFloat(value);
-    if (!isNaN(numericValue) && numericValue >= 0) {
-      setLog2fcThreshold(numericValue);
+    if (!isNaN(numericValue) && numericValue >= 0 && numericValue <= 3) {
+      // Round to nearest 0.5 step
+      const roundedValue = Math.round(numericValue * 2) / 2;
+      setLog2fcThreshold(Math.max(0, Math.min(3, roundedValue)));
     }
   };
 
   // Validate and set p-value threshold (without notifying parent)
+  // Range: 0.01 to 0.1, step: 0.01
   const validateAndSetPadj = (value) => {
     const numericValue = parseFloat(value);
-    if (!isNaN(numericValue) && numericValue > 0 && numericValue <= 1) {
-      setPadjThreshold(numericValue);
+    if (!isNaN(numericValue) && numericValue >= 0.01 && numericValue <= 0.1) {
+      // Round to nearest 0.01 step
+      const roundedValue = Math.round(numericValue * 100) / 100;
+      setPadjThreshold(Math.max(0.01, Math.min(0.1, roundedValue)));
     }
   };
 
@@ -102,9 +108,9 @@ const ThresholdInputControls = ({
               id="log2fc-input"
               name="log2fc"
               type="number"
-              step="0.1"
+              step="0.5"
               min="0"
-              max="10"
+              max="3"
               value={tempLog2fc}
               onChange={handleLog2FCChange}
               onBlur={handleLog2FCBlur}
@@ -123,9 +129,9 @@ const ThresholdInputControls = ({
               id="padj-input"
               name="padj"
               type="number"
-              step="0.001"
-              min="0.001"
-              max="1"
+              step="0.01"
+              min="0.01"
+              max="0.1"
               value={tempPadj}
               onChange={handlePadjChange}
               onBlur={handlePadjBlur}
