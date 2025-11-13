@@ -127,9 +127,19 @@ export class StringService {
         resolvedIdentifiers
       });
       
+      // Load relations only when needed for response (saves memory for large networks)
+      const networkWithData = await this.networkRepository.findOne({
+        where: { id: savedNetwork.id },
+        relations: ['nodes', 'edges']
+      });
+      
+      if (!networkWithData) {
+        throw new Error(`Failed to load network with ID ${savedNetwork.id}`);
+      }
+      
       const totalTime = Date.now() - overallStartTime;
       this.logger.log(`Successfully created network with ID: ${savedNetwork.id} (Total time: ${totalTime}ms - Resolution: ${resolveTime}ms, Cache: ${cacheCheckTime}ms, API: ${apiFetchTime}ms)`);
-      return this.mapNetworkToResponseDto(savedNetwork, true);
+      return this.mapNetworkToResponseDto(networkWithData, true);
       
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
@@ -515,11 +525,17 @@ export class StringService {
     const totalTime = Date.now() - startTime;
     this.logger.log(`Total database save time: ${totalTime}ms (Network: ${networkSaveTime}ms, Collection: ${nodeCollectionTime}ms, Nodes: ${nodeInsertTime}ms, Edges: ${edgeInsertTime}ms)`);
     
-    // Reload network with updated counts
-    return this.networkRepository.findOne({
-      where: { id: savedNetwork.id },
-      relations: ['nodes', 'edges']
-    }) as Promise<StringNetworkEntity>;
+    // Reload network with updated counts (without relations to save memory)
+    // Relations will be loaded on-demand when needed via getNetworkById or queryNetworks
+    const reloadedNetwork = await this.networkRepository.findOne({
+      where: { id: savedNetwork.id }
+    });
+    
+    if (!reloadedNetwork) {
+      throw new Error(`Failed to reload network with ID ${savedNetwork.id}`);
+    }
+    
+    return reloadedNetwork;
   }
 
   /**

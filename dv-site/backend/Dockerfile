@@ -18,5 +18,5 @@ COPY --from=build /app/dist ./dist
 
 EXPOSE 3001
 
-CMD ["node", "dist/main.js"]
+CMD ["node", "--max-old-space-size=4096", "dist/main.js"]
 
