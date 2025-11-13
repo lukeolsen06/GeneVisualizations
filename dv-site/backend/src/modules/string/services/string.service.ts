@@ -603,14 +603,7 @@ export class StringService {
       dto.nodes = network.nodes.map(node => ({
         id: node.id,
         stringId: node.stringId,
-        preferredName: node.preferredName,
-        annotation: node.annotation,
-        log2fc: node.log2fc,
-        padj: node.padj,
-        expression: node.expression,
-        functionalTerms: node.functionalTerms,
-        normalizedDegreeCentrality: node.normalizedDegreeCentrality,
-        degree: node.degree
+        preferredName: node.preferredName
       }));
       
       dto.edges = network.edges.map(edge => ({
