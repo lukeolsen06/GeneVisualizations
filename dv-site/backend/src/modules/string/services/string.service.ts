@@ -110,7 +110,13 @@ export class StringService {
         networkType
       });
       const apiFetchTime = Date.now() - apiFetchStartTime;
-      this.logger.log(`STRING API fetch completed in ${apiFetchTime}ms (${networkData.length} interactions)`);
+      const responseSizeMB = JSON.stringify(networkData).length / (1024 * 1024);
+      this.logger.log(`STRING API fetch completed in ${apiFetchTime}ms (${networkData.length} interactions, ~${responseSizeMB.toFixed(2)} MB)`);
+      
+      // Warn if response is very large (memory concern)
+      if (networkData.length > 50000) {
+        this.logger.warn(`Very large STRING API response: ${networkData.length} interactions. This may cause memory issues.`);
+      }
       
       if (!networkData || networkData.length === 0) {
         throw new BadRequestException('No network data found for the provided gene set');
