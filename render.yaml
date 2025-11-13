@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: gene-viz-backend
+    runtime: docker
+    rootDir: dv-site/backend
+    dockerfilePath: ./Dockerfile
+    dockerContext: dv-site/backend
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: NODE_OPTIONS
+        value: --max-old-space-size=4096
+      - key: PORT
+        value: 3001
+    # Database credentials should be set in Render dashboard:
+    # DB_HOST, DB_PORT, DB_USERNAME, DB_PASSWORD, DB_NAME, DB_SSL
+

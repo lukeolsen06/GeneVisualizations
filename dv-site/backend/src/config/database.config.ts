@@ -23,11 +23,16 @@ export class DatabaseConfig implements TypeOrmOptionsFactory {
     const useSsl = this.configService.get<string>('DB_SSL') === 'true' || this.configService.get<boolean>('DB_SSL', false) === true;
     const sslMode = this.configService.get<string>('DB_SSLMODE');
 
+    // Supabase connection pooler requires specific settings
     const extraOptions: Record<string, unknown> = {
-      max: 10, // Maximum number of connections
-      min: 2,  // Minimum number of connections
-      acquire: 30000, // Maximum time to get connection
-      idle: 10000,    // Maximum idle time
+      max: 5, // Reduced for Supabase free tier limits
+      min: 1, // Minimum connections
+      acquire: 60000, // Increased timeout for Supabase (60 seconds)
+      idle: 20000, // Idle timeout (20 seconds)
+      evict: 1000, // Check for idle connections every second
+      // Connection timeout settings for Supabase pooler
+      connectionTimeoutMillis: 10000, // 10 seconds to establish connection
+      statement_timeout: 30000, // 30 seconds for queries
     };
 
     if (sslMode) {
@@ -56,7 +61,7 @@ export class DatabaseConfig implements TypeOrmOptionsFactory {
       synchronize: this.configService.get<string>('DB_SYNCHRONIZE') === 'true' || this.configService.get<boolean>('DB_SYNCHRONIZE', false) === true, // Don't auto-sync in production
       logging: this.configService.get<string>('DB_LOGGING') === 'true' || this.configService.get<boolean>('DB_LOGGING', false) === true,
       
-      // Connection pool settings
+      // Connection pool settings optimized for Supabase
       extra: extraOptions,
       ...(useSsl && {
         ssl: {
