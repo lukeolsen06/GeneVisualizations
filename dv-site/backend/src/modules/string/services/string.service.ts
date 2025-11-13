@@ -444,116 +444,139 @@ export class StringService {
     const networkSaveTime = Date.now() - startTime;
     this.logger.log(`Saved network entity in ${networkSaveTime}ms`);
     
-    // Step 1: Collect all unique nodes first (without saving)
-    const nodeMap = new Map<string, { stringId: string; preferredName: string }>();
-    const edgeSet = new Set<string>();
-    const edgesToCreate: Array<{
-      networkId: number;
-      sourceStringId: string;
-      sourceGeneName: string;
-      targetStringId: string;
-      targetGeneName: string;
-      interactionScore: number;
-      confidenceLevel: string;
-    }> = [];
+    // Stream processing: Process interactions in chunks and write incrementally
+    // This avoids keeping multiple large data structures in memory simultaneously
+    const PROCESSING_CHUNK_SIZE = 5000; // Process 5000 interactions at a time
+    const EDGE_BATCH_SIZE = 1000; // Write edges in batches of 1000
     
-    const nodeCollectionStart = Date.now();
-    for (const interaction of networkData) {
-      const sourceId = interaction.stringId_A;
-      const targetId = interaction.stringId_B;
-      
-      // Collect source node
-      if (!nodeMap.has(sourceId)) {
-        nodeMap.set(sourceId, {
-          stringId: sourceId,
-          preferredName: interaction.preferredName_A || sourceId
-        });
-      }
-      
-      // Collect target node
-      if (!nodeMap.has(targetId)) {
-        nodeMap.set(targetId, {
-          stringId: targetId,
-          preferredName: interaction.preferredName_B || targetId
-        });
-      }
-      
-      // Build a canonical edge key to avoid duplicates (STRING may return bidirectional rows)
-      const edgeKey = `${sourceId}->${targetId}`;
-      if (edgeSet.has(edgeKey)) {
-        continue;
-      }
-      edgeSet.add(edgeKey);
-
-      // Collect edge data
-      const sourceNode = nodeMap.get(sourceId);
-      const targetNode = nodeMap.get(targetId);
-
-      if (!sourceNode || !targetNode) {
-        this.logger.warn(
-          `Skipping edge ${sourceId}->${targetId} due to missing node reference`,
-        );
-        continue;
-      }
-      
-      edgesToCreate.push({
-        networkId: savedNetwork.id,
-        sourceStringId: sourceId,
-        sourceGeneName: sourceNode.preferredName,
-        targetStringId: targetId,
-        targetGeneName: targetNode.preferredName,
-        interactionScore: parseFloat(interaction.score) || 0,
-        confidenceLevel: this.getConfidenceLevel(parseFloat(interaction.score) || 0)
-      });
-    }
-    const nodeCollectionTime = Date.now() - nodeCollectionStart;
-    this.logger.log(`Collected ${nodeMap.size} nodes and ${edgesToCreate.length} edges in ${nodeCollectionTime}ms`);
+    // Track what we've already inserted
+    // Keep node names in a small Map (nodes are typically hundreds, not thousands)
+    const insertedNodes = new Map<string, string>(); // nodeId -> preferredName
+    const insertedEdgeKeys = new Set<string>();
     
-    // Warn if network is very large
-    if (edgesToCreate.length > 10000) {
-      this.logger.warn(`Large network detected: ${edgesToCreate.length} edges. Processing in chunks to manage memory.`);
-    }
-    
-    // Step 2: Batch insert all nodes at once
-    const nodeInsertStart = Date.now();
-    const nodesToInsert = Array.from(nodeMap.values()).map(nodeData =>
-      this.nodeRepository.create({
-        networkId: savedNetwork.id,
-        stringId: nodeData.stringId,
-        preferredName: nodeData.preferredName
-      })
-    );
-    
-    const savedNodes = await this.nodeRepository.save(nodesToInsert);
-    const nodeInsertTime = Date.now() - nodeInsertStart;
-    this.logger.log(`Batch inserted ${savedNodes.length} nodes in ${nodeInsertTime}ms`);
-    
-    // Step 3: Batch insert edges in chunks to avoid memory issues with large networks
-    const edgeInsertStart = Date.now();
-    const CHUNK_SIZE = 1000; // Process 1000 edges at a time
+    let totalNodesInserted = 0;
     let totalEdgesInserted = 0;
     
-    for (let i = 0; i < edgesToCreate.length; i += CHUNK_SIZE) {
-      const chunk = edgesToCreate.slice(i, i + CHUNK_SIZE);
-      const edgesToInsert = chunk.map(edgeData =>
-        this.edgeRepository.create(edgeData)
-      );
-      
-      await this.edgeRepository.save(edgesToInsert);
-      totalEdgesInserted += edgesToInsert.length;
-      
-      // Log progress for large networks
-      if (edgesToCreate.length > 5000 && i % (CHUNK_SIZE * 5) === 0) {
-        this.logger.log(`Inserted ${totalEdgesInserted}/${edgesToCreate.length} edges...`);
-      }
+    const processingStart = Date.now();
+    
+    // Warn if network is very large
+    if (networkData.length > 10000) {
+      this.logger.warn(`Large network detected: ${networkData.length} interactions. Processing incrementally to manage memory.`);
     }
     
-    const edgeInsertTime = Date.now() - edgeInsertStart;
-    this.logger.log(`Batch inserted ${totalEdgesInserted} edges in ${edgeInsertTime}ms`);
+    // Process networkData in chunks to avoid memory buildup
+    for (let chunkStart = 0; chunkStart < networkData.length; chunkStart += PROCESSING_CHUNK_SIZE) {
+      const chunkEnd = Math.min(chunkStart + PROCESSING_CHUNK_SIZE, networkData.length);
+      const chunk = networkData.slice(chunkStart, chunkEnd);
+      
+      // Process this chunk: collect nodes and edges
+      const chunkNodes = new Map<string, { stringId: string; preferredName: string }>();
+      const chunkEdges: Array<{
+        networkId: number;
+        sourceStringId: string;
+        sourceGeneName: string;
+        targetStringId: string;
+        targetGeneName: string;
+        interactionScore: number;
+        confidenceLevel: string;
+      }> = [];
+      
+      // Process interactions in this chunk
+      for (const interaction of chunk) {
+        const sourceId = interaction.stringId_A;
+        const targetId = interaction.stringId_B;
+        
+        // Collect nodes (only if not already inserted)
+        if (!insertedNodes.has(sourceId)) {
+          chunkNodes.set(sourceId, {
+            stringId: sourceId,
+            preferredName: interaction.preferredName_A || sourceId
+          });
+        }
+        
+        if (!insertedNodes.has(targetId)) {
+          chunkNodes.set(targetId, {
+            stringId: targetId,
+            preferredName: interaction.preferredName_B || targetId
+          });
+        }
+        
+        // Build edge key and check for duplicates
+        const edgeKey = `${sourceId}->${targetId}`;
+        if (insertedEdgeKeys.has(edgeKey)) {
+          continue;
+        }
+        insertedEdgeKeys.add(edgeKey);
+        
+        // Get node names (from chunk or already inserted)
+        const sourceNode = chunkNodes.get(sourceId) || { 
+          stringId: sourceId, 
+          preferredName: insertedNodes.get(sourceId) || sourceId 
+        };
+        const targetNode = chunkNodes.get(targetId) || { 
+          stringId: targetId, 
+          preferredName: insertedNodes.get(targetId) || targetId 
+        };
+        
+        chunkEdges.push({
+          networkId: savedNetwork.id,
+          sourceStringId: sourceId,
+          sourceGeneName: sourceNode.preferredName,
+          targetStringId: targetId,
+          targetGeneName: targetNode.preferredName,
+          interactionScore: parseFloat(interaction.score) || 0,
+          confidenceLevel: this.getConfidenceLevel(parseFloat(interaction.score) || 0)
+        });
+      }
+      
+      // Write nodes from this chunk to DB (in batches)
+      if (chunkNodes.size > 0) {
+        const nodesToInsert = Array.from(chunkNodes.values()).map(nodeData =>
+          this.nodeRepository.create({
+            networkId: savedNetwork.id,
+            stringId: nodeData.stringId,
+            preferredName: nodeData.preferredName
+          })
+        );
+        
+        await this.nodeRepository.save(nodesToInsert);
+        totalNodesInserted += nodesToInsert.length;
+        
+        // Mark nodes as inserted (store ID -> preferredName mapping)
+        for (const [nodeId, nodeData] of chunkNodes.entries()) {
+          insertedNodes.set(nodeId, nodeData.preferredName);
+        }
+      }
+      
+      // Write edges from this chunk to DB (in batches)
+      if (chunkEdges.length > 0) {
+        for (let i = 0; i < chunkEdges.length; i += EDGE_BATCH_SIZE) {
+          const edgeBatch = chunkEdges.slice(i, i + EDGE_BATCH_SIZE);
+          const edgesToInsert = edgeBatch.map(edgeData =>
+            this.edgeRepository.create(edgeData)
+          );
+          
+          await this.edgeRepository.save(edgesToInsert);
+          totalEdgesInserted += edgesToInsert.length;
+        }
+      }
+      
+      // Log progress for large networks
+      if (networkData.length > 10000 && chunkEnd % (PROCESSING_CHUNK_SIZE * 2) === 0) {
+        this.logger.log(`Processed ${chunkEnd}/${networkData.length} interactions (${totalNodesInserted} nodes, ${totalEdgesInserted} edges)...`);
+      }
+      
+      // Clear chunk data from memory (GC can free it)
+      chunkNodes.clear();
+      chunkEdges.length = 0;
+    }
     
-    // Step 5: Update network with final counts
-    const finalNodeCount = nodeMap.size;
-    const finalEdgeCount = edgeSet.size;
+    const processingTime = Date.now() - processingStart;
+    this.logger.log(`Incremental processing completed in ${processingTime}ms (${totalNodesInserted} nodes, ${totalEdgesInserted} edges)`);
+    
+    // Update network with final counts
+    const finalNodeCount = totalNodesInserted;
+    const finalEdgeCount = totalEdgesInserted;
     
     await this.networkRepository.update(savedNetwork.id, {
       nodeCount: finalNodeCount,
@@ -561,7 +584,7 @@ export class StringService {
     });
     
     const totalTime = Date.now() - startTime;
-    this.logger.log(`Total database save time: ${totalTime}ms (Network: ${networkSaveTime}ms, Collection: ${nodeCollectionTime}ms, Nodes: ${nodeInsertTime}ms, Edges: ${edgeInsertTime}ms)`);
+    this.logger.log(`Total database save time: ${totalTime}ms (Network: ${networkSaveTime}ms, Processing: ${processingTime}ms)`);
     
     // Reload network with updated counts (without relations to save memory)
     // Relations will be loaded on-demand when needed via getNetworkById or queryNetworks
